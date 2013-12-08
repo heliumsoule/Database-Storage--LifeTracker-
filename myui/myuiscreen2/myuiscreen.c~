@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <string.h>
+#include "xterm_control.h"
+#include "keyboard.h"
+
+int row, col;
+int board[24][80];
+int i;
+
+void main(){
+  xt_par0(XT_CLEAR_SCREEN);
+  xt_par2(XT_SET_ROW_COL_POS, row = 1, col = 1);
+  xt_par0(XT_CH_GREEN);
+  printf("------------------------------------------LifeTracker-----------------------------------------------");
+  xt_par0(XT_CH_WHITE);
+  printf("                        Number of Records:---| Author:------| Version:-.--\n             First Record Time:------------:--:--| Last Record Time:------------:--:--\n----------------------------------------------------------------------------------------------------");
+  xt_par0(XT_CH_BLUE);
+  printf("---------UP/Down-Scroll between Subjects/Records Left/Right-Toggle between Subjects/Records---------\n\n");
+  xt_par0(XT_CH_WHITE);
+  printf("|");
+  xt_par0(XT_CH_GREEN);
+  printf("---Subjects---");
+  xt_par0(XT_CH_WHITE);
+  printf("|  |");
+  xt_par0(XT_CH_GREEN);
+  printf("Record 1 (--:--:--)                                                    ");
+  xt_par0(XT_CH_WHITE);
+  printf("|\n");
+  for(i = 0; i < 3; i++){
+    if (i > 0){
+      printf("|--------------|  |");
+      xt_par0(XT_CH_GREEN); 
+      printf("Record %d (--:--:--)                                                    ", i+1);
+      xt_par0(XT_CH_WHITE);
+      printf("|\n");
+    }
+    printf("|--------------|  |------------------------------                                         |\n");
+    printf("|--------------|  |---------------------------------------------------------------------- |\n");
+    if (i == 2){
+      printf("|");
+      xt_par0(XT_CH_BLUE); 
+      printf("---F5-Add-----");
+      xt_par0(XT_CH_WHITE);
+      printf("|  |---------------------------------------------------------------------- |\n");
+      printf("|");
+      xt_par0(XT_CH_BLUE);
+      printf("---F6-Sort----");
+      xt_par0(XT_CH_WHITE);
+      printf("|  |                                                                       |\n");
+    }
+    else{
+      printf("|--------------|  |---------------------------------------------------------------------- |\n");
+      printf("|--------------|  |                                                                       |\n");
+    } 
+  }
+  printf("|");
+  xt_par0(XT_CH_BLUE);
+  printf("---F7-Search--");
+  xt_par0(XT_CH_WHITE);
+  printf("|  |");
+  xt_par0(XT_CH_BLUE);
+  printf("-----------------------F2-Add F3-Delete F4-Edit------------------------");
+  xt_par0(XT_CH_WHITE);
+  printf("|");
+}
+
