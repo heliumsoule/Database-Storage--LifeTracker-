@@ -155,7 +155,9 @@ int main() {
   getkey_terminate();
 
   xt_par0(XT_CLEAR_SCREEN);
-  xt_par2(XT_BG_DEFAULT,row=1,col=1);
+  xt_par0(XT_BG_DEFAULT);
+  xt_par2(XT_SET_ROW_COL_POS,row=1,col=1);
+  getkey_terminate();
 
   return 0;
 }
