@@ -104,7 +104,7 @@ void LifeTracker() {
 
 int main() {
   int c;
-  int i, j;
+  int i, j, SUBJECT;
 
   for (i = 0; i < 28; i++) {
     for (j = 0; j < 120; j++) {
@@ -116,21 +116,31 @@ int main() {
 
   Setup();
   LifeTracker();
-  xt_par2(XT_SET_ROW_COL_POS,row=1,col=1);
+  xt_par2(XT_SET_ROW_COL_POS,row=8,col=2);
 
   while (1) {
     while ((c = getkey()) == KEY_NOTHING);
     if(c == KEY_F9) break;
-    else if (c == KEY_UP && row > 1) 
-      xt_par2(XT_SET_ROW_COL_POS,--row,col);
-    else if (c == KEY_DOWN && row < 28)
-      xt_par2(XT_SET_ROW_COL_POS,++row,col);
-    else if (c == KEY_RIGHT && col < 120)
-      xt_par2(XT_SET_ROW_COL_POS,row,++col);
-    else if (c == KEY_LEFT && col > 1)
-      xt_par2(XT_SET_ROW_COL_POS,row,--col);
+    else if(c == KEY_DOWN) {
+      if(col == 2 && row >= 8 && row < 24) 
+          xt_par2(XT_SET_ROW_COL_POS,++row,col);
+      if(col == 20 && row >= 7 && row <= 20)
+          xt_par2(XT_SET_ROW_COL_POS,row+=5,col);
+    }
+    else if(c == KEY_UP){
+      if(col == 2 && row > 8 && row <= 24)
+          xt_par2(XT_SET_ROW_COL_POS,--row,col);
+      if(col == 20 && row >= 8 && row < 24)
+          xt_par2(XT_SET_ROW_COL_POS,row-=5,col);
+    }
     else if (c == KEY_ENTER) 
       xt_par2(XT_SET_ROW_COL_POS,++row,col=1);
+    else if((c == KEY_LEFT || c == KEY_RIGHT) && col == 2) {
+      SUBJECT = row;
+      xt_par2(XT_SET_ROW_COL_POS,row=7,col=20);
+    }
+    else if((c == KEY_LEFT || c == KEY_RIGHT) && col == 20) 
+        xt_par2(XT_SET_ROW_COL_POS,row=SUBJECT,col=2);
     else if (c == KEY_BACKSPACE && col > 1) {
       xt_par2(XT_SET_ROW_COL_POS,row,--col);
       putchar(' ');
