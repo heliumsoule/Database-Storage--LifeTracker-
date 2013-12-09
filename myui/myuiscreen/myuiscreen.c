@@ -129,10 +129,10 @@ int main() {
       if(col > 94 && col < 120){
         if(row == 9)
           xt_par2(XT_SET_ROW_COL_POS,row = 11,col = 95);
-        else if(row == 13)
-          xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
         else if(row == 11)
           xt_par2(XT_SET_ROW_COL_POS,row = 13,col = 95);
+        else if(row < 25)
+          xt_par2(XT_SET_ROW_COL_POS,++row,col);
       }
     }
     else if(c == KEY_UP){
@@ -147,6 +147,8 @@ int main() {
           xt_par2(XT_SET_ROW_COL_POS,row = 11,col = 95);
         else if(row == 11)
           xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
+        else 
+          xt_par2(XT_SET_ROW_COL_POS,--row,col);
       }
     }
     else if (c == KEY_ENTER) 
@@ -157,10 +159,18 @@ int main() {
     }
     else if((c == KEY_LEFT || c == KEY_RIGHT) && col == 20) 
         xt_par2(XT_SET_ROW_COL_POS,row=SUBJECT,col=2);
-    else if(c == KEY_LEFT && col > 95 && col < 120)
+    else if(c == KEY_LEFT && col > 95 && col < 120 && row > 12 && row < 26)
       xt_par2(XT_SET_ROW_COL_POS,row,--col);
+
+    else if(c == KEY_LEFT && col == 95 && row > 12 && row < 26)
+      xt_par2(XT_SET_ROW_COL_POS,--row,col=119);
+
     else if(c == KEY_RIGHT && col > 94 && col < 119)
       xt_par2(XT_SET_ROW_COL_POS,row,++col);
+
+    else if(c == KEY_RIGHT && col == 119 && row > 11 && row < 25) 
+      xt_par2(XT_SET_ROW_COL_POS,++row,col=96);
+
     else if (c == KEY_BACKSPACE && col > 1) {
       xt_par2(XT_SET_ROW_COL_POS,row,--col);
       putchar(' ');
