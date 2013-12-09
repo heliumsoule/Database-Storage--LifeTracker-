@@ -126,12 +126,28 @@ int main() {
           xt_par2(XT_SET_ROW_COL_POS,++row,col);
       if(col == 20 && row >= 7 && row <= 20)
           xt_par2(XT_SET_ROW_COL_POS,row+=5,col);
+      if(col > 94 && col < 120){
+        if(row == 9)
+          xt_par2(XT_SET_ROW_COL_POS,row = 11,col = 95);
+        else if(row == 13)
+          xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
+        else if(row == 11)
+          xt_par2(XT_SET_ROW_COL_POS,row = 13,col = 95);
+      }
     }
     else if(c == KEY_UP){
       if(col == 2 && row > 8 && row <= 24)
           xt_par2(XT_SET_ROW_COL_POS,--row,col);
       if(col == 20 && row >= 8 && row < 24)
           xt_par2(XT_SET_ROW_COL_POS,row-=5,col);
+      if(col > 94 && col < 120){
+        if(row == 9)
+          xt_par2(XT_SET_ROW_COL_POS,row = 13,col = 95);
+        else if(row == 13)
+          xt_par2(XT_SET_ROW_COL_POS,row = 11,col = 95);
+        else if(row == 11)
+          xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
+      }
     }
     else if (c == KEY_ENTER) 
       xt_par2(XT_SET_ROW_COL_POS,++row,col=1);
@@ -141,6 +157,10 @@ int main() {
     }
     else if((c == KEY_LEFT || c == KEY_RIGHT) && col == 20) 
         xt_par2(XT_SET_ROW_COL_POS,row=SUBJECT,col=2);
+    else if(c == KEY_LEFT && col > 95 && col < 120)
+      xt_par2(XT_SET_ROW_COL_POS,row,--col);
+    else if(c == KEY_RIGHT && col > 94 && col < 119)
+      xt_par2(XT_SET_ROW_COL_POS,row,++col);
     else if (c == KEY_BACKSPACE && col > 1) {
       xt_par2(XT_SET_ROW_COL_POS,row,--col);
       putchar(' ');
@@ -150,7 +170,16 @@ int main() {
       Board[row - 1][col - 1] = ' ';
       putchar(' ');
       xt_par2(XT_SET_ROW_COL_POS,row,col);
-    } else if (c >= '1' && c <= '9') {
+    }
+    else if (c == KEY_F7){
+      if(col < 95)
+        xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
+      //else if(the user has written a requirement)
+      //xt_par2(XT_SET_ROW_COL_POS,row = 7,col = 20);
+      else
+        xt_par2(XT_SET_ROW_COL_POS,row = SUBJECT,col = 2);   
+    } 
+    else if (c >= '1' && c <= '9') {
       putchar(c);
       Board[row-1][col-1] = c;
       if (col < 112) {
