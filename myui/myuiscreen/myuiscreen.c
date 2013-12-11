@@ -146,6 +146,7 @@ void addscreen(){
 int main() {
   int c;
   int i, j, SUBJECT;
+  int screen = 0;
 
   for (i = 0; i < 28; i++) {
     for (j = 0; j < 120; j++) {
@@ -154,12 +155,13 @@ int main() {
     }
     Board[i][120] = '\0';
   }
-
+if (screen == 0){
   Setup();
   LifeTracker();
+}
   xt_par2(XT_SET_ROW_COL_POS,row=8,col=2);
-
-  while (1) {
+while (1){
+  while (screen == 0) {
     while ((c = getkey()) == KEY_NOTHING);
     if(c == KEY_F9) break;
     else if(c == KEY_DOWN) {
@@ -223,8 +225,7 @@ int main() {
       xt_par2(XT_SET_ROW_COL_POS,row,col);
     }
     else if (c == KEY_F2){
-      addscreen();
-      xt_par2(XT_SET_ROW_COL_POS,row = 16, col = 25);
+      screen = 1;
     }
     else if (c == KEY_F7){
       if(col < 95)
@@ -246,6 +247,20 @@ int main() {
       }
     }
   }
+  if (screen == 1 ){
+    addscreen();
+    xt_par2(XT_SET_ROW_COL_POS,row = 16, col = 25);
+  } 
+  while(screen == 1){
+    while((c = getkey()) == KEY_NOTHING);
+    if (c == KEY_F9){
+    screen = 0;
+  }
+  else if (c == KEY_DOWN){
+    //xt_par2(XT_SET_ROW_COL_POS,row-=2,col);
+  }
+}
+}
   getkey_terminate();
 
   xt_par0(XT_CLEAR_SCREEN);
