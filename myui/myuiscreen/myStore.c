@@ -35,6 +35,7 @@ char *Usage = "Usage:\tmystore add \"subject\" \"body\"\n\
 int command = NOTHING;
 char *subject = NULL;
 char *body = NULL;
+char *category = NULL;
 int item_start = -1;
 int item_end = -1;
 
@@ -42,7 +43,7 @@ int item_end = -1;
 int parseArgs(int argc, char *argv[]);
 int isPositive(char *s);
 int readData(void);
-int add(char *subject, char *body);
+int add(char *subject, char *body, char *category);
 void stat(void);
 char *rstrip(char *s);
 void list(void);
@@ -88,7 +89,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    if (command == ADD && !add(argv[2],argv[3])) {
+    if (command == ADD && !add(argv[2],argv[3],argv[4])) {
         if (errmsg[0] != '\0')
             printf("|status: ERROR: %s|\n", errmsg);
         else
@@ -172,11 +173,12 @@ int parseArgs(int argc, char *argv[]) {
         }
     }
     // try the two-argument command: add
-    else if (argc == 4) {
+    else if (argc == 5) {
         if (strcmp(argv[1],"add") == 0) {
             command = ADD;
             subject = argv[2];
             body = argv[3];
+	    category = argv[4];
             return TRUE;
         }
         else {
@@ -256,7 +258,7 @@ int readData(void) {
 }
 
 // ---------------------------------------- add --------------------------------------
-int add(char *subject, char *body) {
+int add(char *subject, char *body, char *category) {
     struct data current_data;
     struct carrier *current_carrier;
     
@@ -265,7 +267,7 @@ int add(char *subject, char *body) {
     current_data.theSubject[30]='\0';
     strncpy(current_data.theBody, body, 140);
     current_data.theBody[140] = '\0';
-    strncpy(current_data.theCateogry, category, 14);
+    strncpy(current_data.theCategory, category, 14);
     current_data.theCategory[13] = '\0';
     current_data.theTime = time(NULL);
     
@@ -403,6 +405,7 @@ int display(char *sn) {
     //printf("|time: %s|\n",rstrip(ctime(&this_data.theTime)));
     printf("|subject: %s|\n",this_data.theSubject);
     printf("|body: %s|\n",this_data.theBody);
+    printf("|category: %s|\n",this_data.theCategory);
     
     return TRUE;
 }

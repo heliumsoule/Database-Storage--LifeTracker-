@@ -5,19 +5,21 @@
 #include "keyboard.h"
 #include <unistd.h> 
 
-int row, col;   //120 x 28                                How will we save what the user as written into a record/subject?
-int i;                                                  //How will implement the "subject" section? (possibly an array of records)
+int row, col;   //120 x 28                                
+int i;                  
+int screen = 0;                                
 int SUBJECT = 8;   
 char input[1000];
+char Board[100][100];
 
-int ReadMystoreFromChild(char *argv1, char *argv2) {
+int ReadMyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4) {
   int pid, mypipe[2];
-  char *newargv[5];
+  char *newargv[6];
   char *errmsg;
   int n_input = 0;
   
   // turn off special keyboard handling
-  getkey_terminate();
+  //getkey_terminate();
   
   // create the pipe
   if (pipe(mypipe) == -1) {
@@ -38,7 +40,8 @@ int ReadMystoreFromChild(char *argv1, char *argv2) {
     newargv[0] = newargv[1] = "./mystore";
     newargv[2] = argv1;
     newargv[3] = argv2;
-    newargv[4] = NULL;
+    newargv[4] = argv3;
+    newargv[5] = argv4;
     execvp(newargv[0],newargv+1);
     exit(0);
   }
@@ -74,24 +77,26 @@ void Setup() {                          //print using myui (stat)
   xt_par0(XT_CLEAR_SCREEN);
   xt_par2(XT_SET_ROW_COL_POS, row = 1, col = 1);
   xt_par0(XT_CH_GREEN);
+  int A = ReadMyStoreFromChild("stat", NULL, NULL, NULL);
   printf("----------------------------------------------------LifeTracker---------------------------------------------------------");
   xt_par0(XT_CH_WHITE);
-  printf("                                  Number of Records:---|  Author:------| Version:-.--\n                       First Record  Time:------------:--:--| Last Record  Time:------------:--:--\n------------------------------------------------------------------------------------------------------------------------");
+  xt_par2(XT_SET_ROW_COL_POS,row=2,col=35);
+  printf("Number of Records:---|  Author:------| Version:-.--");
+  xt_par2(XT_SET_ROW_COL_POS,row=3,col=24);
+  printf("First Record  Time:------------:--:--| Last Record  Time:------------:--:--");
+  xt_par2(XT_SET_ROW_COL_POS,row=4,col=1);
+  printf("-------------------------------------------------------------------------------------------------------------------------");
+  xt_par2(XT_SET_ROW_COL_POS,row=5,col=1);
   xt_par0(XT_CH_BLUE);
-  printf("------------UP/Down-Scroll between Subjects/Records/Search  Left/Right-Toggle between Subjects/Records/Search------------");
+  if (screen == 0)
+    printf("------------UP/Down-Scroll between Subjects/Records/Search Left/Right-Toggle between Subjects/Records/Search------------");
+  else 
+    printf("-------------------------------------UP/Down-Switch rows Left/Right-Switch columns--------------------------------------");
   xt_par0(XT_CH_WHITE);
 }
 
 void LifeTracker() {
-  xt_par0(XT_CLEAR_SCREEN);
-  xt_par2(XT_SET_ROW_COL_POS, row = 1, col = 1);
-  xt_par0(XT_CH_GREEN);
-  printf("----------------------------------------------------LifeTracker---------------------------------------------------------");
-  xt_par0(XT_CH_WHITE);
-  printf("                                  Number of Records:---| Author:------| Version:-.--\n                       First Record Time:------------:--:--| Last Record Time:------------:--:--\n------------------------------------------------------------------------------------------------------------------------");
-  xt_par0(XT_CH_BLUE);
-  printf("------------UP/Down-Scroll between Subjects/Records/Search Left/Right-Toggle between Subjects/Records/Search------------");
-  xt_par0(XT_CH_WHITE);
+  Setup();
   for(i = 0; i < 20; i++){
     xt_par2(XT_SET_ROW_COL_POS, row = i+7, col = 1);
     printf("|");
@@ -166,15 +171,7 @@ void LifeTracker() {
 }
 
 void addscreen(){
-  xt_par0(XT_CLEAR_SCREEN);
-  xt_par2(XT_SET_ROW_COL_POS, row = 1, col = 1);
-  xt_par0(XT_CH_GREEN);
-  printf("----------------------------------------------------LifeTracker---------------------------------------------------------");
-  xt_par0(XT_CH_WHITE);
-  printf("                                  Number of Records:---| Author:------| Version:-.--\n                       First Record Time:------------:--:--| Last Record Time:------------:--:--\n------------------------------------------------------------------------------------------------------------------------");
-  xt_par0(XT_CH_BLUE);
-  printf("-------------------------------------UP/Down-Switch rows Left/Right-Switch columns--------------------------------------");
-  xt_par0(XT_CH_WHITE);
+  Setup();
   for(i = 0; i < 12; i++){
     xt_par2(XT_SET_ROW_COL_POS, row = 11+i, col = 24);
     printf("|");
@@ -210,7 +207,6 @@ void addscreen(){
 int main() {
   int c;
   int i, j;
-  int screen = 0;
 
   for (i = 0; i < 28; i++) {
     for (j = 0; j < 120; j++) {
@@ -219,10 +215,11 @@ int main() {
     }
     Board[i][120] = '\0';
   }
-    Setup();
   while (1){
-    if (screen == 0) 
+    if (screen == 0){ 
       LifeTracker();
+      //ReadMystoreFromChild("stat", NULL, NULL, NULL);
+    }
     while (screen == 0) {
       while ((c = getkey()) == KEY_NOTHING);
       if(c == KEY_F9) screen = 3;
