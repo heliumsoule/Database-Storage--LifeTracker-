@@ -10,16 +10,27 @@ int screen = 0;
 int SUBJECT = 8;   
 char input[1000];
 char Board[100][100];
-struct NameValue{
+
+struct Stat {
   char *name;
   char *value;
-  };
+};
 
-struct NameValue *records;
-struct NameValue *stat;
+struct Stat *data;
+struct Stat *record;
+
+struct ArrayRecords {
+  char *subject;
+  char *body;
+  char *category;
+  char *timedate;
+};
+
+struct ArrayRecords *dataStorage;
+
 int total;
 
-void ParseInput(){
+void parseInputForStat(){
   //fread(all, 300, 1, stdin);
   int i;
   char *p;
@@ -28,7 +39,7 @@ void ParseInput(){
     if (input[i] == '|') total++;
   }
   total /= 2;
-  records = (struct NameValue*) malloc((total+1)*sizeof(struct NameValue));
+  data = (struct Stat*) malloc((total+1)*sizeof(struct Stat));
   for(i = 0; i < sizeof(input); i++){
     if (input[i] == ':' && input[i+1] == ' '){
       input[i] = '\0';
@@ -39,15 +50,74 @@ void ParseInput(){
   }
   for(i = 0; i < total; i++){
     p++;
-    records[i].name = p;
+    data[i].name = p;
     while(*p) p++;
     p+= 2;
-    records[i].value = p;
+    data[i].value = p;
     while(*p) p++;
     p+= 2;
   }
 }
-int ReadMyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4) {
+
+void recordsHelper(){
+  //fread(all, 300, 1, stdin);
+  int i;
+  char *p;
+  p = input;
+  for(i = 0; i < sizeof(input); i++){
+    if (input[i] == '|') total++;
+  }
+  total /= 2;
+  record = (struct Stat*) malloc((total+1)*sizeof(struct Stat));
+  for(i = 0; i < sizeof(input); i++){
+    if (input[i] == ':' && input[i+1] == ' '){
+      input[i] = '\0';
+      input[i++] = '\0';
+    }
+    else if (input[i] == '|') 
+      input[i] = '\0';
+  }
+  for(i = 0; i < total; i++){
+    p++;
+    record[i].name = p;
+    while(*p) p++;
+    p+= 2;
+    record[i].value = p;
+    while(*p) p++;
+    p+= 2;
+  }
+}
+
+int parseInputForRecords(int counter) {
+  char c;
+  int i;
+  dataStorage = (struct ArrayRecords*)malloc((counter)*sizeof(struct ArrayRecords));
+  for(i = 0; i < counter; i++) {
+    char str[80];
+    sprintf(str, "%d", i+1);
+    readmyStoreFromChild("display", str, NULL, NULL);
+    recordsHelper();
+
+    char *ARGA = record[2].value;
+    char *ARGB = record[3].value;
+    char *ARGC = record[4].value;
+    char *ARGD = record[5].value;
+
+    dataStorage[i].timedate = malloc((strlen(ARGA) + 1) * sizeof(char));
+    dataStorage[i].subject = malloc((strlen(ARGB) + 1) * sizeof(char));
+    dataStorage[i].body = malloc((strlen(ARGC) + 1) * sizeof(char));
+    dataStorage[i].category = malloc((strlen(ARGD) + 1) * sizeof(char));
+
+    strcpy(dataStorage[i].timedate, ARGA);
+    strcpy(dataStorage[i].subject, ARGB);
+    strcpy(dataStorage[i].body, ARGC);
+    strcpy(dataStorage[i].category, ARGD);
+
+  }
+}
+
+
+int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4) {
   int pid, mypipe[2];
   char *newargv[6];
   char *errmsg;
@@ -104,11 +174,15 @@ int ReadMyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4) {
   
   return n_input;
 }
+
 int setStat(){
-  int Count = ReadMyStoreFromChild("stat", NULL, NULL, NULL);
-  ParseInput();
+  readmyStoreFromChild("stat", NULL, NULL, NULL); 
+  parseInputForStat();
+  int count = atoi(data[3].value); 
+  parseInputForRecords(4); 
 }
-void Setup() {                          //print using myui (stat)
+
+void setup() {                          //print using myui (stat)
   xt_par0(XT_CLEAR_SCREEN);
   setStat();
   xt_par2(XT_SET_ROW_COL_POS, row = 1, col = 1);
@@ -116,9 +190,9 @@ void Setup() {                          //print using myui (stat)
   printf("----------------------------------------------------LifeTracker---------------------------------------------------------");
   xt_par0(XT_CH_WHITE);
   xt_par2(XT_SET_ROW_COL_POS,row=2,col=35);
-  printf("Number of Records: %s |  Author: %s | Version: %s ", records[3].value, records[2].value, records[1].value);
+  printf("Number of Records: %s |  Author: %s | Version: %s ", data[3].value, data[2].value, data[1].value);
   xt_par2(XT_SET_ROW_COL_POS,row=3,col=24);
-  printf("First Record  Time: %s | Last Record  Time: %s", records[4].value, records[5].value);
+  printf("First Record  Time: %s | Last Record  Time: %s", data[4].value, data[5].value);
   xt_par2(XT_SET_ROW_COL_POS,row=4,col=1);
   printf("-------------------------------------------------------------------------------------------------------------------------");
   xt_par2(XT_SET_ROW_COL_POS,row=5,col=1);
@@ -129,8 +203,8 @@ void Setup() {                          //print using myui (stat)
     printf("-------------------------------------UP/Down-Switch rows Left/Right-Switch columns--------------------------------------");
   xt_par0(XT_CH_WHITE);
 }
-void LifeTracker() {
-  Setup();
+void lifeTracker() {
+  setup();
   for(i = 0; i < 20; i++){
     xt_par2(XT_SET_ROW_COL_POS, row = i+7, col = 1);
     printf("|");
@@ -164,7 +238,7 @@ void LifeTracker() {
   for(i = 0; i < 4; i++){
     xt_par2(XT_SET_ROW_COL_POS, row = 7+5*i, col = 20);
     xt_par0(XT_CH_GREEN);
-    printf("Record %d (--:--:--)", i+1);                  //get the time using myui1
+    printf("Record %d %s %s", i+1, dataStorage[i].subject, dataStorage[i].timedate);                  //get the time using myui1
     xt_par0(XT_CH_WHITE);
     xt_par2(XT_SET_ROW_COL_POS, row = 8+5*i, col = 20);
     printf("------------------------------");            //get the title using myui1
@@ -203,8 +277,8 @@ void LifeTracker() {
   xt_par0(XT_CH_WHITE);
   xt_par2(XT_SET_ROW_COL_POS,row=SUBJECT,col=2);
 }
-void addscreen(){
-  Setup();
+void addScreen(){
+  setup();
   
   for(i = 0; i < 12; i++){
     xt_par2(XT_SET_ROW_COL_POS, row = 11+i, col = 24);
@@ -238,7 +312,7 @@ void addscreen(){
 }
 int main() {
   int c;
-  int i, j;
+  int i, j; 
   for (i = 0; i < 28; i++) {
     for (j = 0; j < 120; j++) {
       Board[i][j] = ' ';
@@ -247,8 +321,7 @@ int main() {
   }
   while (1){
     if (screen == 0){ 
-      LifeTracker();
-      //ReadMystoreFromChild("stat", NULL, NULL, NULL);
+      lifeTracker();
     }
     while (screen == 0) {
       while ((c = getkey()) == KEY_NOTHING);
@@ -354,7 +427,7 @@ int main() {
     }*/
     }
     if (screen == 1 || screen == 2){
-      addscreen();
+      addScreen();
       if (screen == 2){
     //print corresponding record in correct locations using myui1 
       }
