@@ -215,8 +215,8 @@ void setup() {                          //print using myui (stat)
 }
 
 void updateRecords(int range){
-  char TempA[76];
-  char TempB[76];
+  char TempA[71];
+  char TempB[71];
   int r;
   int i;
   for (i = 6; i <= 24; i++){
@@ -226,15 +226,13 @@ void updateRecords(int range){
   i = 0;
   for(r = range; r < 4+range; r++){
     int k = 0;
-    while(TempA[k] != '\0'){
+    while(k != 70) {
       TempA[k] = ' ';
-      k++;
-    }
-    k = 0;
-    while(TempB[k] != '\0'){
       TempB[k] = ' ';
       k++;
     }
+    TempA[70] = '\0';
+    TempB[70] = '\0';
     k = 0;
     xt_par2(XT_SET_ROW_COL_POS, row = 7+5*i, col = 20);
     xt_par0(XT_CH_GREEN);
@@ -243,8 +241,8 @@ void updateRecords(int range){
     xt_par2(XT_SET_ROW_COL_POS, row = 8+5*i, col = 20);
     int j = 0;
      while(dataStorage[r].body[j] != '\0'){
-      if (j < 70) TempA[j] = dataStorage[r].body[j];
-      else if (j < 140) TempB[j%70] = dataStorage[r].body[j];
+      if (j < 71) TempA[j] = dataStorage[r].body[j];
+      else if (j < 141) TempB[j%71] = dataStorage[r].body[j];
       j++;
     }
     xt_par0(XT_CH_GREEN);
@@ -489,19 +487,15 @@ int main() {
     if (screen == 1 || screen == 2){
       addScreen();
       if (screen == 2){ 
-        /*
-        char TempA[76]; 
-        char TempB[76];
+        char TempA[71]; 
+        char TempB[71];
         int k = 0;
-        while(TempA[k] != '\0'){
-          TempA[k] = ' ';
-          k++;
+        while(k != 70) {
+        TempA[k] = ' ';
+        TempB[k] = ' ';
+        k++;
         }
         k = 0;
-        while(TempB[k] != '\0'){
-          TempB[k] = ' ';
-          k++;
-        }
         xt_par2(XT_SET_ROW_COL_POS, row = 12, col = 25);
         xt_par0(XT_CH_GREEN);
         printf("Record %d (%s)", currentRecord+1, dataStorage[currentRecord].timedate); //get the time using myui1
@@ -510,19 +504,26 @@ int main() {
         printf("%s", dataStorage[currentRecord].category);
         int j = 0;
         while(dataStorage[currentRecord].body[j] != '\0'){
-          if (j < 70) TempA[j] = dataStorage[currentRecord].body[j];
-          else if (j < 140) TempB[j%70] = dataStorage[currentRecord].body[j];
+          if (j < 71) TempA[j] = dataStorage[currentRecord].body[j];
+          else if (j < 141) TempB[j%71] = dataStorage[currentRecord].body[j];
           j++;
         }
+        TempA[70] = '\0';
+        TempB[70] = '\0';
+        //NOT RESETTING ARRAY
+        //TempB[70] = '\0';
         xt_par2(XT_SET_ROW_COL_POS, row = 16, col = 25);
-        xt_par0(XT_CH_GREEN);
         printf("%s", dataStorage[currentRecord].subject);
         xt_par0(XT_CH_WHITE);
         xt_par2(XT_SET_ROW_COL_POS, row = 19, col = 25);
         printf("%s", TempA);
         xt_par2(XT_SET_ROW_COL_POS, row = 20, col = 25);
         printf("%s", TempB);
-        //print corresponding record in correct locations using myui1 */
+        xt_par2(XT_SET_ROW_COL_POS, row = 14, col = 25);
+        strcpy(Title, dataStorage[currentRecord].subject);
+        strcpy(Body, dataStorage[currentRecord].body);
+        strcpy(Category, dataStorage[currentRecord].category);
+        //print corresponding record in correct locations using myui1 
       }
     } 
     while(screen == 1 || screen == 2){
@@ -615,22 +616,28 @@ int main() {
       else if(c == KEY_F2 && screen == 1 /* && there is a valid title and description */){
     //save record to corresponding subject
         readmyStoreFromChild("add", Title, Body, Category, NULL);
-        /*Title = NULL;
-        Body = NULL;
-        Category = NULL;*/
+        int k = 0;
+        while(k != 18) Title[k++] = ' ';
+        k = 0;
+        while(k != 140) Body[k++] = ' ';
+        k = 0;
+        while(k != 29) Category[k++] = ' ';
         screen = 0;
         xt_par0(XT_CLEAR_SCREEN);
         //xt_par0(XT_CH_GREEN);
         setup();
       }
       else if(c == KEY_F2 && screen == 2 /* && there has been a valid change in the record */){
-    //update record
+        //update record
         char str[80];
         sprintf(str, "%d", currentRecord+1);
         readmyStoreFromChild("edit", str, Title, Body, Category);
-        /*Title = NULL;
-        Body = NULL;
-        Category = NULL;*/
+        int k = 0;
+        while(k != 18) Title[k++] = ' ';
+        k = 0;
+        while(k != 140) Body[k++] = ' ';
+        k = 0;
+        while(k != 29) Category[k++] = ' ';
         screen = 0;
         setup();
       }    
