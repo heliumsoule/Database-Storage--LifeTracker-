@@ -178,21 +178,23 @@ int parseArgs(int argc, char *argv[]) {
             command = ADD;
             subject = argv[2];
             body = argv[3];
-	    category = argv[4];
+	        category = argv[4];
             return TRUE;
         }
         else {
-            sprintf(errmsg, "Unrecognized 3-argument call: %s %s %s",argv[1],argv[2],argv[3]);
+            sprintf(errmsg, "NIGGAS Unrecognized 3-argument call: %s %s %s",argv[1],argv[2],argv[3]);
             return FALSE;
         }
     }
     // try the three-argument command: edit
-    else if (argc == 5) {
+    else if (argc == 6) {
         if (strcmp(argv[1], "edit") == 0 && isPositive(argv[2])) {
             command = EDIT;
             item_start = atoi(argv[2]);
             subject = argv[3];
             body = argv[4];
+            category = argv[5];
+            strcpy(category, argv[5]);
             return TRUE;
         }
         else {
@@ -307,6 +309,8 @@ int edit(char *sn) {
     this_data = ptr->theData;
     strncpy(this_data.theSubject,subject,30);
     this_data.theSubject[30] = '\0';
+    strncpy(this_data.theCategory,category,14);
+    this_data.theCategory[14] = '\0';
     strncpy(this_data.theBody,body,140);
     this_data.theBody[140] = '\0';
     this_data.theTime = time(NULL);

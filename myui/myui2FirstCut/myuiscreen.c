@@ -14,6 +14,7 @@ char Title[29];
 char Body[140];
 int recordView = 0; //first record shown on the screen (-1)
 int maxRecord;
+int currentRecord = 0;
 struct Stat {
   char *name;
   char *value;
@@ -95,7 +96,7 @@ int parseInputForRecords(int counter) {
   for(i = 0; i < counter; i++) {
     char str[80];
     sprintf(str, "%d", i+1);
-    readmyStoreFromChild("display", str, NULL, NULL);
+    readmyStoreFromChild("display", str, NULL, NULL, NULL);
     recordsHelper();
     char *ARGA = record[2].value;
     char *ARGB = record[3].value;
@@ -111,9 +112,9 @@ int parseInputForRecords(int counter) {
     strcpy(dataStorage[i].category, ARGD);
   }
 }
-int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4) {
+int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5) {
   int pid, mypipe[2];
-  char *newargv[6];
+  char *newargv[7];
   char *errmsg;
   int n_input = 0;
   // turn off special keyboard handling
@@ -140,7 +141,8 @@ int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4) {
     newargv[2] = argv2;
     newargv[3] = argv3;
     newargv[4] = argv4;
-    newargv[5] = NULL;
+    newargv[5] = argv5;
+    newargv[6] = NULL;
     execvp(newargv[0],newargv);
 
     exit(0);
@@ -170,36 +172,48 @@ int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4) {
 }
 
 int setStat(){
-  readmyStoreFromChild("stat", NULL, NULL, NULL); 
+  readmyStoreFromChild("stat", NULL, NULL, NULL, NULL); 
   parseInputForStat();
   int count = atoi(data[3].value); 
   parseInputForRecords(maxRecord); 
 }
+
 void setup() {                          //print using myui (stat)
   toBeAdded = (struct Stat*) malloc(3 * sizeof(struct Stat));
   toBeAdded[0].name = "Category";
   toBeAdded[1].name = "Subject";
   toBeAdded[2].name = "Body";
+  /*for(i = 0; i < 18; i++){
+    Category[i] = ' ';
+  }
+  for(i = 0; i < 29; i++){
+    Title[i] = ' ';
+  }
+  for(i = 0; i < 140; i++){
+    Body[i] = ' ';
+  }*/
   xt_par0(XT_CLEAR_SCREEN);
   setStat();
   xt_par2(XT_SET_ROW_COL_POS, row = 1, col = 1);
   xt_par0(XT_CH_GREEN);
   printf("----------------------------------------------------LifeTracker---------------------------------------------------------");
   xt_par0(XT_CH_WHITE);
-  xt_par2(XT_SET_ROW_COL_POS,row=2,col=35);
+  xt_par2(XT_SET_ROW_COL_POS, row = 2, col = 35);
   printf("Number of Records: %s |  Author: %s | Version: %s ", data[3].value, data[2].value, data[1].value);
-  xt_par2(XT_SET_ROW_COL_POS,row=3,col=24);
+  xt_par2(XT_SET_ROW_COL_POS,row = 3, col = 24);
   printf("First Record  Time: %s | Last Record  Time: %s", data[4].value, data[5].value);
-  xt_par2(XT_SET_ROW_COL_POS,row=4,col=1);
+  xt_par2(XT_SET_ROW_COL_POS, row = 4, col = 1);
   printf("------------------------------------------------------------------------------------------------------------------------");
-  xt_par2(XT_SET_ROW_COL_POS,row=5,col=1);
+  xt_par2(XT_SET_ROW_COL_POS, row = 5, col = 1);
   xt_par0(XT_CH_BLUE);
   if (screen == 0)
     printf("------------UP/Down-Scroll between Subjects/Records/Search Left/Right-Toggle between Subjects/Records/Search------------");
   else 
     printf("-------------------------------------UP/Down-Switch rows Left/Right-Switch columns--------------------------------------");
   xt_par0(XT_CH_WHITE);
+  xt_par2(XT_SET_ROW_COL_POS, row = 7, col = 21);
 }
+
 void updateRecords(int range){
   char TempA[76];
   char TempB[76];
@@ -224,7 +238,7 @@ void updateRecords(int range){
     k = 0;
     xt_par2(XT_SET_ROW_COL_POS, row = 7+5*i, col = 20);
     xt_par0(XT_CH_GREEN);
-    printf("Record %d (%s)", r+1, dataStorage[r].timedate);                  //get the time using myui1
+    printf("Record %d (%s)", r+1, dataStorage[r].timedate); //get the time using myui1
     xt_par0(XT_CH_WHITE);
     xt_par2(XT_SET_ROW_COL_POS, row = 8+5*i, col = 20);
     int j = 0;
@@ -353,6 +367,8 @@ int main() {
   int c;
   while (1){
     if (screen == 0){ 
+      currentRecord = 0;
+      recordView = 0;
       lifeTracker();
     }
     while (screen == 0) {
@@ -363,14 +379,17 @@ int main() {
         if(col == 2 && row >= 8 && row < 24) 
           xt_par2(XT_SET_ROW_COL_POS,SUBJECT = ++row,col);
         if(col == 20 && row >= 7 && row <= 22){
-          if (row < 22)
+          if (row < 22){
             xt_par2(XT_SET_ROW_COL_POS,row+=5,col);
+            ++currentRecord;
+            }
           else if (recordView < maxRecord-4){
             ++recordView;
             updateRecords(recordView);
             xt_par2(XT_SET_ROW_COL_POS,row=22,col);
+            ++currentRecord;
           }
-    }
+        }
     if(col > 94 && col < 120){
       if(row == 9)
         xt_par2(XT_SET_ROW_COL_POS,row = 11,col = 95);
@@ -381,17 +400,20 @@ int main() {
     }
       }
       else if(c == KEY_UP){
-    if(col == 2 && row > 8 && row <= 24)
+        if(col == 2 && row > 8 && row <= 24)
           xt_par2(XT_SET_ROW_COL_POS,SUBJECT = --row,col);
-    if(col == 20 && row >= 7 && row < 24){
-      if (row <= 24 && row > 7)
-        xt_par2(XT_SET_ROW_COL_POS,row-=5,col);
-      else if (recordView > 0){
-        --recordView;
-        updateRecords(recordView);
-        xt_par2(XT_SET_ROW_COL_POS,row=7,col);
-      }
-    }
+        if(col == 20 && row >= 7 && row < 24){
+          if (row <= 24 && row > 7){
+            xt_par2(XT_SET_ROW_COL_POS,row-=5,col);
+            --currentRecord;
+            }
+          else if (recordView > 0){
+            --recordView;
+            updateRecords(recordView);
+            xt_par2(XT_SET_ROW_COL_POS,row=7,col);
+            --currentRecord;
+          }
+        }
     if(col > 94 && col < 120){
       if(row == 9)
         xt_par2(XT_SET_ROW_COL_POS,row = 13,col = 95);
@@ -409,8 +431,10 @@ int main() {
     SUBJECT = row;
     xt_par2(XT_SET_ROW_COL_POS,row=7,col=20);
       }
-      else if((c == KEY_LEFT || c == KEY_RIGHT) && col == 20) 
+      else if((c == KEY_LEFT || c == KEY_RIGHT) && col == 20) {
         xt_par2(XT_SET_ROW_COL_POS,row=SUBJECT,col=2);
+        currentRecord = recordView;
+        }
       else if(c == KEY_LEFT && col > 95 && col < 120)
     xt_par2(XT_SET_ROW_COL_POS,row,--col);
       else if(c == KEY_LEFT && col == 95 && row > 13 && row < 26)
@@ -445,10 +469,14 @@ int main() {
     }
       }
       else if (c == KEY_F2)
-    screen = 1;
+        screen = 1;
+      else if(c == KEY_F4)
+        screen = 2;
       
       else if (c == KEY_F4 && col == 20)
     screen = 2;
+    else if (c == KEY_F6)
+        printf("%d", currentRecord);
       else if (c == KEY_F7){
     if(col < 95)
       xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
@@ -460,8 +488,40 @@ int main() {
     }
     if (screen == 1 || screen == 2){
       addScreen();
-      if (screen == 2){
-    //print corresponding record in correct locations using myui1 
+      if (screen == 2){ /*
+        char TempA[76]; 
+        char TempB[76];
+        int k = 0;
+        while(TempA[k] != '\0'){
+          TempA[k] = ' ';
+          k++;
+        }
+        k = 0;
+        while(TempB[k] != '\0'){
+          TempB[k] = ' ';
+          k++;
+        }
+        xt_par2(XT_SET_ROW_COL_POS, row = 12, col = 25);
+        xt_par0(XT_CH_GREEN);
+        printf("Record %d (%s)", currentRecord+1, dataStorage[currentRecord].timedate); //get the time using myui1
+        xt_par0(XT_CH_WHITE);
+        xt_par2(XT_SET_ROW_COL_POS, row = 14, col = 25);
+        printf("%s", dataStorage[currentRecord].category);
+        int j = 0;
+        while(dataStorage[currentRecord].body[j] != '\0'){
+          if (j < 70) TempA[j] = dataStorage[currentRecord].body[j];
+          else if (j < 140) TempB[j%70] = dataStorage[currentRecord].body[j];
+          j++;
+        }
+        xt_par2(XT_SET_ROW_COL_POS, row = 16, col = 25);
+        xt_par0(XT_CH_GREEN);
+        printf("%s", dataStorage[currentRecord].subject);
+        xt_par0(XT_CH_WHITE);
+        xt_par2(XT_SET_ROW_COL_POS, row = 19, col = 25);
+        printf("%s", TempA);
+        xt_par2(XT_SET_ROW_COL_POS, row = 20, col = 25);
+        printf("%s", TempB);
+        //print corresponding record in correct locations using myui1 */
       }
     } 
     while(screen == 1 || screen == 2){
@@ -515,42 +575,55 @@ int main() {
         putchar(' ');
         xt_par2(XT_SET_ROW_COL_POS,row,col);
       } 
-      else if((c >= ' ' && c <= '~') && col >= 25 && col < 95) {
-        if(row == 14 && col >= 25 && col < 43) {
-          putchar(c);
-          Category[col - 25] = c;
-        }
-        else if(row == 16 && col >= 25 && col < 54) {
-          putchar(c);
-          Title[col - 25] = c;
-        }
-        else if(row == 19 && col >= 25 && col <= 95) {
-          putchar(c);
-          Body[col - 25] = c;
-        }
-        else if(row == 20 && col >= 25 && col <= 95) {
-          putchar(c);
-          Body[col + 45] = c;
-        }
-        if (col < 94 && !(row == 16 && col > 53) && !(row == 14 && col > 42)){
-          ++col; 
-        }
-      else{ 
-        if (row == 19)                                            
-          xt_par2(XT_SET_ROW_COL_POS,++row,col=25);
-        else xt_par2(XT_SET_ROW_COL_POS,row,col); 
-        }
+      else if(c == KEY_F3) {
+        char str[80];
+        sprintf(str, "%d", currentRecord);
+        readmyStoreFromChild("del", str, NULL, NULL, NULL);
+        setup();
+      }
+      //else if(screen == 1 || screen == 2) {
+        else if((c >= ' ' && c <= '~') && col >= 25 && col < 95) {
+            if(row == 14 && col >= 25 && col < 43) {
+              putchar(c);
+              Category[col - 25] = c;
+            }
+            else if(row == 16 && col >= 25 && col < 54) {
+              putchar(c);
+              Title[col - 25] = c;
+            }
+            else if(row == 19 && col >= 25 && col <= 95) {
+              putchar(c);
+              Body[col - 25] = c;
+            }
+            else if(row == 20 && col >= 25 && col <= 95) {
+              putchar(c);
+              Body[col + 45] = c;
+            }
+            if (col < 94 && !(row == 16 && col > 53) && !(row == 14 && col > 42)){
+              ++col; 
+            }
+          
+          else{ 
+            if (row == 19)                                            
+              xt_par2(XT_SET_ROW_COL_POS,++row,col=25);
+            else xt_par2(XT_SET_ROW_COL_POS,row,col); 
+          }
       }
       else if(c == KEY_F2 && screen == 1 /* && there is a valid title and description */){
     //save record to corresponding subject
-        printf("INPUT? %d\n", readmyStoreFromChild("add", Title, Body, Category));
-
+        readmyStoreFromChild("add", Title, Body, Category, NULL);
         screen = 0;
+        xt_par0(XT_CLEAR_SCREEN);
+        //xt_par0(XT_CH_GREEN);
         setup();
       }
       else if(c == KEY_F2 && screen == 2 /* && there has been a valid change in the record */){
     //update record
+        char str[80];
+        sprintf(str, "%d", currentRecord+1);
+        readmyStoreFromChild("edit", str, Title, Body, Category);
         screen = 0;
+        setup();
       }    
     }
     if (screen == 3) break;
@@ -561,4 +634,4 @@ int main() {
   xt_par2(XT_SET_ROW_COL_POS,row=1,col=1);
   getkey_terminate();
   return 0;
-}
+}    
