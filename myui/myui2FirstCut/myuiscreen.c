@@ -474,7 +474,7 @@ int main() {
         screen = 2;
       
       else if (c == KEY_F4 && col == 20)
-    screen = 2;
+        screen = 2;
     else if (c == KEY_F6)
         printf("%d", currentRecord);
       else if (c == KEY_F7){
@@ -488,7 +488,8 @@ int main() {
     }
     if (screen == 1 || screen == 2){
       addScreen();
-      if (screen == 2){ /*
+      if (screen == 2){ 
+        /*
         char TempA[76]; 
         char TempB[76];
         int k = 0;
@@ -528,6 +529,7 @@ int main() {
       while((c = getkey()) == KEY_NOTHING);
       if (c == KEY_F9){
         screen = 0;
+        setup();
       }
       else if (c == KEY_DOWN){
         if(row == 14) 
@@ -578,7 +580,8 @@ int main() {
       else if(c == KEY_F3) {
         char str[80];
         sprintf(str, "%d", currentRecord);
-        readmyStoreFromChild("del", str, NULL, NULL, NULL);
+        readmyStoreFromChild("delete", str, NULL, NULL, NULL);
+        readmyStoreFromChild("add", "TESTING", "DUNNO", "WORKS?", NULL);
         setup();
       }
       //else if(screen == 1 || screen == 2) {
@@ -612,6 +615,9 @@ int main() {
       else if(c == KEY_F2 && screen == 1 /* && there is a valid title and description */){
     //save record to corresponding subject
         readmyStoreFromChild("add", Title, Body, Category, NULL);
+        /*Title = NULL;
+        Body = NULL;
+        Category = NULL;*/
         screen = 0;
         xt_par0(XT_CLEAR_SCREEN);
         //xt_par0(XT_CH_GREEN);
@@ -622,6 +628,9 @@ int main() {
         char str[80];
         sprintf(str, "%d", currentRecord+1);
         readmyStoreFromChild("edit", str, Title, Body, Category);
+        /*Title = NULL;
+        Body = NULL;
+        Category = NULL;*/
         screen = 0;
         setup();
       }    
