@@ -178,7 +178,7 @@ int setStat(){
   parseInputForRecords(maxRecord); 
 }
 
-void setup() {                          //print using myui (stat)
+void setup() {                    //print using myui (stat)
   toBeAdded = (struct Stat*) malloc(3 * sizeof(struct Stat));
   toBeAdded[0].name = "Category";
   toBeAdded[1].name = "Subject";
@@ -468,9 +468,6 @@ int main() {
       }
       else if (c == KEY_F2)
         screen = 1;
-      else if(c == KEY_F4)
-        screen = 2;
-      
       else if (c == KEY_F4 && col == 20)
         screen = 2;
     else if (c == KEY_F6)
@@ -495,14 +492,14 @@ int main() {
         TempB[k] = ' ';
         k++;
         }
-        k = 0;
+        k = 0; 
         xt_par2(XT_SET_ROW_COL_POS, row = 12, col = 25);
         xt_par0(XT_CH_GREEN);
         printf("Record %d (%s)", currentRecord+1, dataStorage[currentRecord].timedate); //get the time using myui1
         xt_par0(XT_CH_WHITE);
         xt_par2(XT_SET_ROW_COL_POS, row = 14, col = 25);
         printf("%s", dataStorage[currentRecord].category);
-        int j = 0;
+        int j = 0; 
         while(dataStorage[currentRecord].body[j] != '\0'){
           if (j < 71) TempA[j] = dataStorage[currentRecord].body[j];
           else if (j < 141) TempB[j%71] = dataStorage[currentRecord].body[j];
@@ -511,18 +508,18 @@ int main() {
         TempA[70] = '\0';
         TempB[70] = '\0';
         //NOT RESETTING ARRAY
-        //TempB[70] = '\0';
+        //TempB[70] = '\0'; 
         xt_par2(XT_SET_ROW_COL_POS, row = 16, col = 25);
         printf("%s", dataStorage[currentRecord].subject);
         xt_par0(XT_CH_WHITE);
         xt_par2(XT_SET_ROW_COL_POS, row = 19, col = 25);
-        printf("%s", TempA);
-        xt_par2(XT_SET_ROW_COL_POS, row = 20, col = 25);
-        printf("%s", TempB);
-        xt_par2(XT_SET_ROW_COL_POS, row = 14, col = 25);
-        strcpy(Title, dataStorage[currentRecord].subject);
-        strcpy(Body, dataStorage[currentRecord].body);
-        strcpy(Category, dataStorage[currentRecord].category);
+        printf("%s", TempA); 
+        xt_par2(XT_SET_ROW_COL_POS, row = 20, col = 25); 
+        printf("%s", TempB); 
+        xt_par2(XT_SET_ROW_COL_POS, row = 14, col = 25); 
+        strncpy(Title, dataStorage[currentRecord].subject, sizeof(Title));
+        strncpy(Body, dataStorage[currentRecord].body, sizeof(Body));
+        strncpy(Category, dataStorage[currentRecord].category, sizeof(Category));
         //print corresponding record in correct locations using myui1 
       }
     } 
@@ -530,7 +527,9 @@ int main() {
       while((c = getkey()) == KEY_NOTHING);
       if (c == KEY_F9){
         screen = 0;
-        setup();
+        xt_par0(XT_CLEAR_SCREEN);
+        //setup();
+        //updateRecords(0);
       }
       else if (c == KEY_DOWN){
         if(row == 14) 
@@ -623,9 +622,6 @@ int main() {
         k = 0;
         while(k != 29) Category[k++] = ' ';
         screen = 0;
-        xt_par0(XT_CLEAR_SCREEN);
-        //xt_par0(XT_CH_GREEN);
-        setup();
       }
       else if(c == KEY_F2 && screen == 2 /* && there has been a valid change in the record */){
         //update record
@@ -639,7 +635,6 @@ int main() {
         k = 0;
         while(k != 29) Category[k++] = ' ';
         screen = 0;
-        setup();
       }    
     }
     if (screen == 3) break;
