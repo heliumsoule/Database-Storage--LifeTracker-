@@ -30,8 +30,8 @@ struct ArrayRecords {
 };
 struct ArrayRecords *dataStorage;
 int total;
+
 void parseInputForStat(){
-  //fread(all, 300, 1, stdin);
   int i;
   char *p;
   p = input;
@@ -39,9 +39,9 @@ void parseInputForStat(){
     if (input[i] == '|') total++;
   }
   total /= 2;
-  data = (struct Stat*) malloc((total+1)*sizeof(struct Stat));
-  for(i = 0; i < sizeof(input); i++){
-    if (input[i] == ':' && input[i+1] == ' '){
+  data = (struct Stat*) malloc((total + 1) * sizeof(struct Stat));
+  for(i = 0; i < sizeof(input); i++) {
+    if (input[i] == ':' && input[i + 1] == ' '){
       input[i] = '\0';
       input[i++] = '\0';
     }
@@ -61,8 +61,8 @@ void parseInputForStat(){
   }
   maxRecord = atoi(data[3].value);
 }
+
 void recordsHelper(){
-  //fread(all, 300, 1, stdin);
   int i;
   char *p;
   p = input;
@@ -70,7 +70,7 @@ void recordsHelper(){
     if (input[i] == '|') total++;
   }
   total /= 2;
-  record = (struct Stat*) malloc((total+1)*sizeof(struct Stat));
+  record = (struct Stat*) malloc((total + 1) * sizeof(struct Stat));
   for(i = 0; i < sizeof(input); i++){
     if (input[i] == ':' && input[i+1] == ' '){
       input[i] = '\0';
@@ -89,10 +89,11 @@ void recordsHelper(){
     p+= 2;
   }
 }
+
 int parseInputForRecords(int counter) {
   char c;
   int i;
-  dataStorage = (struct ArrayRecords*)malloc((counter)*sizeof(struct ArrayRecords));
+  dataStorage = (struct ArrayRecords*)malloc((counter) * sizeof(struct ArrayRecords));
   for(i = 0; i < counter; i++) {
     char str[80];
     sprintf(str, "%d", i+1);
@@ -107,9 +108,9 @@ int parseInputForRecords(int counter) {
     dataStorage[i].body = malloc((strlen(ARGC) + 1) * sizeof(char));
     dataStorage[i].category = malloc((strlen(ARGD) + 1) * sizeof(char));
     strcpy(dataStorage[i].timedate, ARGA);
-    strcpy(dataStorage[i].subject, ARGB);
-    strcpy(dataStorage[i].body, ARGC);
-    strcpy(dataStorage[i].category, ARGD);
+    strncpy(dataStorage[i].subject, ARGB, 29);
+    strncpy(dataStorage[i].body, ARGC, 140);
+    strncpy(dataStorage[i].category, ARGD, 18);
   }
 }
 int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5) {
@@ -215,8 +216,8 @@ void setup() {                    //print using myui (stat)
 }
 
 void updateRecords(int range){
-  char TempA[71];
-  char TempB[71];
+  char TempBodyA[71];
+  char TempBodyB[71];
   int r;
   int i;
   for (i = 6; i <= 24; i++){
@@ -227,12 +228,12 @@ void updateRecords(int range){
   for(r = range; r < 4+range; r++){
     int k = 0;
     while(k != 70) {
-      TempA[k] = ' ';
-      TempB[k] = ' ';
+      TempBodyA[k] = '-';
+      TempBodyB[k] = '-';
       k++;
     }
-    TempA[70] = '\0';
-    TempB[70] = '\0';
+    TempBodyA[70] = '\0';
+    TempBodyB[70] = '\0';
     k = 0;
     xt_par2(XT_SET_ROW_COL_POS, row = 7+5*i, col = 20);
     xt_par0(XT_CH_GREEN);
@@ -241,17 +242,17 @@ void updateRecords(int range){
     xt_par2(XT_SET_ROW_COL_POS, row = 8+5*i, col = 20);
     int j = 0;
      while(dataStorage[r].body[j] != '\0'){
-      if (j < 71) TempA[j] = dataStorage[r].body[j];
-      else if (j < 141) TempB[j%71] = dataStorage[r].body[j];
+      if (j < 71) TempBodyA[j] = dataStorage[r].body[j];
+      else if (j < 141) TempBodyB[j%71] = dataStorage[r].body[j];
       j++;
     }
     xt_par0(XT_CH_GREEN);
     printf("%s", dataStorage[r].subject);
     xt_par0(XT_CH_WHITE);
     xt_par2(XT_SET_ROW_COL_POS, row = 9+5*i, col = 20);
-    printf("%s", TempA);
+    printf("%s", TempBodyA);
     xt_par2(XT_SET_ROW_COL_POS, row = 10+5*i, col = 20);
-    printf("%s", TempB);
+    printf("%s", TempBodyB);
     i++;
     }
 }
@@ -475,21 +476,25 @@ int main() {
       else if (c == KEY_F7){
     if(col < 95)
       xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
-    //else if(the user has written a requirement)
-    //xt_par2(XT_SET_ROW_COL_POS,row = 7,col = 20);
     else
       xt_par2(XT_SET_ROW_COL_POS,row = SUBJECT,col = 2);   
       } 
     }
     if (screen == 1 || screen == 2){
+      int reset = 0;
+      for(reset; reset < 18; reset++) Title[reset] == '-';
+      reset = 0;
+      for(reset; reset < 140; reset++) Body[reset] = '-';
+      reset = 0;
+      for(reset; reset < 29; reset++) Category[reset] = '-';
       addScreen();
       if (screen == 2){ 
-        char TempA[71]; 
-        char TempB[71];
+        char TempBodyA[71]; 
+        char TempBodyB[71];
         int k = 0;
         while(k != 70) {
-        TempA[k] = ' ';
-        TempB[k] = ' ';
+        TempBodyA[k] = '-';
+        TempBodyB[k] = '-';
         k++;
         }
         k = 0; 
@@ -501,21 +506,21 @@ int main() {
         printf("%s", dataStorage[currentRecord].category);
         int j = 0; 
         while(dataStorage[currentRecord].body[j] != '\0'){
-          if (j < 71) TempA[j] = dataStorage[currentRecord].body[j];
-          else if (j < 141) TempB[j%71] = dataStorage[currentRecord].body[j];
+          if (j < 71) TempBodyA[j] = dataStorage[currentRecord].body[j];
+          else if (j < 141) TempBodyB[j%71] = dataStorage[currentRecord].body[j];
           j++;
         }
-        TempA[70] = '\0';
-        TempB[70] = '\0';
+        TempBodyA[70] = '\0';
+        TempBodyB[70] = '\0';
         //NOT RESETTING ARRAY
-        //TempB[70] = '\0'; 
+        //TempBodyB[70] = '\0'; 
         xt_par2(XT_SET_ROW_COL_POS, row = 16, col = 25);
         printf("%s", dataStorage[currentRecord].subject);
         xt_par0(XT_CH_WHITE);
         xt_par2(XT_SET_ROW_COL_POS, row = 19, col = 25);
-        printf("%s", TempA); 
+        printf("%s", TempBodyA); 
         xt_par2(XT_SET_ROW_COL_POS, row = 20, col = 25); 
-        printf("%s", TempB); 
+        printf("%s", TempBodyB); 
         xt_par2(XT_SET_ROW_COL_POS, row = 14, col = 25); 
         strncpy(Title, dataStorage[currentRecord].subject, sizeof(Title));
         strncpy(Body, dataStorage[currentRecord].body, sizeof(Body));
@@ -523,7 +528,7 @@ int main() {
         //print corresponding record in correct locations using myui1 
       }
     } 
-    while(screen == 1 || screen == 2){
+    while(screen == 1 || screen == 2) {
       while((c = getkey()) == KEY_NOTHING);
       if (c == KEY_F9){
         screen = 0;
