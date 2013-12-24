@@ -470,20 +470,24 @@ void clearSearch(){
   //insert code for resetting Title, Category, and Body (for some reason we have several versions of this)
   int trow, tcol;
   xt_par2(XT_SET_ROW_COL_POS, trow = 8, tcol = 95);
-  printf("Subject:");
-  xt_par2(XT_SET_ROW_COL_POS, trow = 10, tcol = 95);
+  printf("Category:");
+  xt_par2(XT_SET_ROW_COL_POS, trow = 11, tcol = 95);
   printf("Title:");
-  xt_par2(XT_SET_ROW_COL_POS, trow = 12, tcol = 95);
+  xt_par2(XT_SET_ROW_COL_POS, trow = 15, tcol = 95);
   printf("Body:");
   xt_par0(XT_CH_WHITE);
   xt_par2(XT_SET_ROW_COL_POS, trow = 9, tcol = 95);
-  printf("-------------------------");
-  xt_par2(XT_SET_ROW_COL_POS, trow = 11, tcol = 95);
-  printf("-------------------------");
-  for(i = 0; i < 13; i++){
-    xt_par2(XT_SET_ROW_COL_POS, trow = 13+i, tcol = 95);
+  printf("------------------");
+  xt_par2(XT_SET_ROW_COL_POS, trow = 12, tcol = 95);
+  printf("--------");
+  xt_par2(XT_SET_ROW_COL_POS, trow = 13, tcol = 95);
+  printf("------------------");
+  for(i = 0; i < 5; i++){
+    xt_par2(XT_SET_ROW_COL_POS, trow = 16+i, tcol = 95);
     printf("-------------------------");
   }
+  xt_par2(XT_SET_ROW_COL_POS, trow = 16 + 5, tcol = 95);
+  printf("---------------");
   xt_par2(XT_SET_ROW_COL_POS, row, col);
 }
 
@@ -608,7 +612,7 @@ int main() {
         else if(c == KEY_DOWN) {
           if(col == 2 && row >= 8 && row < catCounter + 7){ 
             xt_par2(XT_SET_ROW_COL_POS,SUBJECT = ++row,col);
-  	       updateRecords(recordView);
+  	        updateRecords(recordView);
   	      }
           if(col == 20 && row >= 7 && row <= tempCounter * 5 + 1){
             if(row < 22){
@@ -625,15 +629,17 @@ int main() {
           }
         	if(col > 94 && col < 120){
         	  if(row == 9)
-        	    xt_par2(XT_SET_ROW_COL_POS,row = 11,col = 95);
-        	  else if(row == 11)
+        	    xt_par2(XT_SET_ROW_COL_POS,row = 12,col = 95);
+        	  else if(row == 12)
         	    xt_par2(XT_SET_ROW_COL_POS,row = 13,col = 95);
-        	  else if(row < 25)
-        	    xt_par2(XT_SET_ROW_COL_POS,++row,col);
+        	  else if(row == 13)
+        	    xt_par2(XT_SET_ROW_COL_POS,row = 16,col);
+            else if(row < 21) 
+              xt_par2(XT_SET_ROW_COL_POS, ++row, col);
         	}
         }
         else if(c == KEY_UP){
-          if(col == 2 && row > 8 && row <= 24){
+          if(col == 2 && row > 8 && row <= 18){
             xt_par2(XT_SET_ROW_COL_POS,SUBJECT = --row,col);
         	  updateRecords(recordView);
         	}
@@ -661,7 +667,7 @@ int main() {
         	    xt_par2(XT_SET_ROW_COL_POS,--row,col);
         	}
         }
-        else if(c == KEY_ENTER && col > 94 && col < 120 && row > 12 && row < 25) xt_par2(XT_SET_ROW_COL_POS,++row,col=95);
+        else if(c == KEY_ENTER && col > 94 && col < 120 && row > 12 && row < 18) xt_par2(XT_SET_ROW_COL_POS,++row,col=95);
         else if((c == KEY_LEFT || c == KEY_RIGHT) && col == 2) {
         	SUBJECT = row;
         	updateRecords(recordView);
@@ -673,14 +679,27 @@ int main() {
           currentRecord = recordView = search = 0;
   	      updateRecords(recordView);
         }
-        else if(c == KEY_LEFT && col > 95 && col < 120) xt_par2(XT_SET_ROW_COL_POS,row,--col);
-        else if(c == KEY_LEFT && col == 95 && row > 13 && row < 26) xt_par2(XT_SET_ROW_COL_POS,--row,col=119);
-        else if(c == KEY_RIGHT && col > 94 && col < 119) xt_par2(XT_SET_ROW_COL_POS,row,++col);
-        else if(c == KEY_RIGHT && col == 119 && row > 11 && row < 25) xt_par2(XT_SET_ROW_COL_POS,++row,col=95);
+        else if(c == KEY_LEFT && col > 95 && col < 120) 
+          xt_par2(XT_SET_ROW_COL_POS,row,--col);
+        else if(c == KEY_LEFT && col == 95 && row > 13 && row < 26) 
+          xt_par2(XT_SET_ROW_COL_POS,--row,col=119);
+        else if(c == KEY_RIGHT && col > 94 && col < 119) 
+          xt_par2(XT_SET_ROW_COL_POS,row,++col);
+        else if(c == KEY_RIGHT && col == 119 && row > 11 && row < 18) 
+          xt_par2(XT_SET_ROW_COL_POS,++row,col=95);
         else if(c == KEY_BACKSPACE && col > 95 && col < 120 && ((row > 12 && row < 26) || row == 11 || row == 9)) {
         	xt_par2(XT_SET_ROW_COL_POS,row,--col);
         	putchar(' ');
         	xt_par2(XT_SET_ROW_COL_POS,row,col);
+          if(row == 9) {
+            Category[col - 95] = ' ';
+          }
+          else if(row == 11) {
+            Title[col - 95] = ' ';
+          }
+          else {
+            Body[(row - 13) * 25 + col - 95] = ' ';
+          }
         } 
         else if(c == KEY_BACKSPACE && col == 95 && row > 13 && row < 26){
         	xt_par2(XT_SET_ROW_COL_POS,--row,col=119);
@@ -717,6 +736,12 @@ int main() {
         	}
         }
         else if (c == KEY_F7){
+          int reset = 0;
+          for(reset; reset < 18; reset++) Title[reset] = ' ';
+          reset = 0;
+          for(reset; reset < 140; reset++) Body[reset] = ' ';
+          reset = 0;
+          for(reset; reset < 29; reset++) Category[reset] = ' ';
         	if(col < 95) xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
         	else xt_par2(XT_SET_ROW_COL_POS,row = SUBJECT,col = 2);   
         } 
