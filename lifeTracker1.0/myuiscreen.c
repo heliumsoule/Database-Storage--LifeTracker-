@@ -634,8 +634,12 @@ int main() {
         	    xt_par2(XT_SET_ROW_COL_POS,row = 13,col = 95);
         	  else if(row == 13)
         	    xt_par2(XT_SET_ROW_COL_POS,row = 16,col);
-            else if(row < 21) 
-              xt_par2(XT_SET_ROW_COL_POS, ++row, col);
+            else if(row < 20) 
+              xt_par2(XT_SET_ROW_COL_POS,++row,col);
+            else if(row == 20 && col < 110)
+              xt_par2(XT_SET_ROW_COL_POS,++row,col);
+            else if(row == 20 && col > 110)
+              xt_par2(XT_SET_ROW_COL_POS,++row,col = 109);
         	}
         }
         else if(c == KEY_UP){
@@ -656,15 +660,15 @@ int main() {
                 --currentRecord;
             }
           }
-        	if(col > 94 && col < 120){
-        	  if(row == 9)
-        	    xt_par2(XT_SET_ROW_COL_POS,row = 13,col = 95);
-        	  else if(row == 14)
-        	    xt_par2(XT_SET_ROW_COL_POS,row = 11,col = 95);
-        	  else if(row == 11)
+        	if(row > 9 && col > 94 && col < 120){
+        	  if(row == 12)
         	    xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
-        	  else 
-        	    xt_par2(XT_SET_ROW_COL_POS,--row,col);
+        	  else if(row == 13)
+        	    xt_par2(XT_SET_ROW_COL_POS,row = 12,col = 95);
+            else if(row == 16) 
+              xt_par2(XT_SET_ROW_COL_POS, row = 13, col = 95);
+        	  else if(row < 22)
+        	    xt_par2(XT_SET_ROW_COL_POS, --row, col);
         	}
         }
         else if(c == KEY_ENTER && col > 94 && col < 120 && row > 12 && row < 18) xt_par2(XT_SET_ROW_COL_POS,++row,col=95);
@@ -679,14 +683,30 @@ int main() {
           currentRecord = recordView = search = 0;
   	      updateRecords(recordView);
         }
-        else if(c == KEY_LEFT && col > 95 && col < 120) 
-          xt_par2(XT_SET_ROW_COL_POS,row,--col);
-        else if(c == KEY_LEFT && col == 95 && row > 13 && row < 26) 
-          xt_par2(XT_SET_ROW_COL_POS,--row,col=119);
-        else if(c == KEY_RIGHT && col > 94 && col < 119) 
-          xt_par2(XT_SET_ROW_COL_POS,row,++col);
-        else if(c == KEY_RIGHT && col == 119 && row > 11 && row < 18) 
-          xt_par2(XT_SET_ROW_COL_POS,++row,col=95);
+        else if(c == KEY_LEFT && col >= 95) {
+          if(col > 95)
+            xt_par2(XT_SET_ROW_COL_POS,row,--col);
+          else if(row == 13 && col == 95) 
+            xt_par2(XT_SET_ROW_COL_POS,--row,col = 102);
+          else if(row >= 17 && row <= 21 && col == 95) 
+            xt_par2(XT_SET_ROW_COL_POS,--row, col = 119);
+        }
+        else if(c == KEY_RIGHT && col > 94) {
+          if(row == 9 && col < 112) 
+            xt_par2(XT_SET_ROW_COL_POS,row,++col);
+          else if(row == 12 && col < 102) 
+              xt_par2(XT_SET_ROW_COL_POS,row,++col);
+            else if(row == 12 && col == 102) 
+              xt_par2(XT_SET_ROW_COL_POS,++row,col = 95);
+          else if(row == 13 && col < 112) 
+            xt_par2(XT_SET_ROW_COL_POS,row,++col);
+          else if(row >= 16 && row < 21 && col < 119)
+            xt_par2(XT_SET_ROW_COL_POS,row,++col);
+          else if(row == 21 && col < 109) 
+            xt_par2(XT_SET_ROW_COL_POS,row,++col);
+          else if(row >= 16 && row <= 21 && col == 119) 
+            xt_par2(XT_SET_ROW_COL_POS,++row,col = 95);
+        }
         else if(c == KEY_BACKSPACE && col > 95 && col < 120 && ((row > 12 && row < 26) || row == 11 || row == 9)) {
         	xt_par2(XT_SET_ROW_COL_POS,row,--col);
         	putchar(' ');
@@ -711,15 +731,47 @@ int main() {
         	xt_par2(XT_SET_ROW_COL_POS,row,col);
         }
         else if((c >= ' ' && c <= '~') && col >= 95 && col < 120){
-        	putchar(c); 
-        	if(col < 119){
-        	  ++col; 
-        	}
-        	else{ 
-        	  if(row > 12 && row < 25)                                            
-        	    xt_par2(XT_SET_ROW_COL_POS,++row,col=95);
-        	  else xt_par2(XT_SET_ROW_COL_POS,row,col); 
-        	}
+        	//putchar(c); 
+          if(row == 9 && col < 112) {
+            putchar(c);
+            xt_par2(XT_SET_ROW_COL_POS,row,++col);
+          }
+          else if(row == 9 && col == 112) {
+            putchar(c);
+            xt_par2(XT_SET_ROW_COL_POS,row,col);
+          }
+          else if(row == 12 && col < 102) {
+            putchar(c);
+            xt_par2(XT_SET_ROW_COL_POS,row,++col);
+          }
+          else if(row == 12 && col == 102) {
+            putchar(c);
+            xt_par2(XT_SET_ROW_COL_POS,++row,col=95);
+          }
+          else if(row == 13 && col < 112) {
+            putchar(c);
+            xt_par2(XT_SET_ROW_COL_POS,row,++col);
+          }
+          else if(row == 13 && col == 112) {
+            putchar(c);
+            xt_par2(XT_SET_ROW_COL_POS,row,col);
+          }
+          else if(row >= 16 && row < 21 && col < 119) {
+            putchar(c);
+            xt_par2(XT_SET_ROW_COL_POS,row,++col);
+          }
+          else if(row >= 16 && row < 21 && col == 119) {
+            putchar(c);
+            xt_par2(XT_SET_ROW_COL_POS,++row,col = 95);
+          }
+          else if(row == 21 && col < 109) {
+            putchar(c);
+            xt_par2(XT_SET_ROW_COL_POS,row,++col);
+          }
+          else if(row == 21 && col == 109) {
+            putchar(c);
+            xt_par2(XT_SET_ROW_COL_POS,row,col);
+          }
         }
         else if(c == KEY_F2)
           screen = 1;
