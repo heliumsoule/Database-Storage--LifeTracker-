@@ -470,6 +470,7 @@ void clearSearch(){
   //insert code for resetting Title, Category, and Body (for some reason we have several versions of this)
   int trow, tcol;
   xt_par2(XT_SET_ROW_COL_POS, trow = 8, tcol = 95);
+  xt_par0(XT_CH_GREEN);
   printf("Category:");
   xt_par2(XT_SET_ROW_COL_POS, trow = 11, tcol = 95);
   printf("Title:");
@@ -479,7 +480,7 @@ void clearSearch(){
   xt_par2(XT_SET_ROW_COL_POS, trow = 9, tcol = 95);
   printf("------------------");
   xt_par2(XT_SET_ROW_COL_POS, trow = 12, tcol = 95);
-  printf("--------");
+  printf("-------");
   xt_par2(XT_SET_ROW_COL_POS, trow = 13, tcol = 95);
   printf("------------------");
   for(i = 0; i < 5; i++){
@@ -687,16 +688,16 @@ int main() {
           if(col > 95)
             xt_par2(XT_SET_ROW_COL_POS,row,--col);
           else if(row == 13 && col == 95) 
-            xt_par2(XT_SET_ROW_COL_POS,--row,col = 102);
+            xt_par2(XT_SET_ROW_COL_POS,--row,col = 101);
           else if(row >= 17 && row <= 21 && col == 95) 
             xt_par2(XT_SET_ROW_COL_POS,--row, col = 119);
         }
         else if(c == KEY_RIGHT && col > 94) {
           if(row == 9 && col < 112) 
             xt_par2(XT_SET_ROW_COL_POS,row,++col);
-          else if(row == 12 && col < 102) 
+          else if(row == 12 && col < 101) 
               xt_par2(XT_SET_ROW_COL_POS,row,++col);
-            else if(row == 12 && col == 102) 
+            else if(row == 12 && col == 101) 
               xt_par2(XT_SET_ROW_COL_POS,++row,col = 95);
           else if(row == 13 && col < 112) 
             xt_par2(XT_SET_ROW_COL_POS,row,++col);
@@ -707,69 +708,100 @@ int main() {
           else if(row >= 16 && row <= 21 && col == 119) 
             xt_par2(XT_SET_ROW_COL_POS,++row,col = 95);
         }
-        else if(c == KEY_BACKSPACE && col > 95 && col < 120 && ((row > 12 && row < 26) || row == 11 || row == 9)) {
-        	xt_par2(XT_SET_ROW_COL_POS,row,--col);
-        	putchar(' ');
-        	xt_par2(XT_SET_ROW_COL_POS,row,col);
-          if(row == 9) {
+        else if(c == KEY_DELETE) {
+          putchar(' ');
+          if(row == 9) Category[col - 95] = ' ';
+          else if(row == 12) Title[col - 95] = ' ';
+          else if(row == 13) Title[col - 88] = ' ';
+          else if(row >= 16 && row < 22) Body[(row - 16) * 25 + col - 95] = ' ';
+        }
+        else if(c == KEY_BACKSPACE && col > 94) {
+          if((row == 9 || row == 12) && col > 95) {
+            putchar(' ');
             Category[col - 95] = ' ';
+            xt_par2(XT_SET_ROW_COL_POS,row,--col);
           }
-          else if(row == 11) {
+          else if((row == 9 || row == 12) && col == 95) {
+            putchar(' ');
             Title[col - 95] = ' ';
+            xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
-          else {
-            Body[(row - 13) * 25 + col - 95] = ' ';
+          else if(row == 13 && col > 95) {
+            putchar(' ');
+            Title[col - 88] = ' ';
+            xt_par2(XT_SET_ROW_COL_POS,row,--col);
+          }
+          else if(row == 13 && col == 95) {
+            putchar(' ');
+            Title[col - 88] = ' ';
+            xt_par2(XT_SET_ROW_COL_POS,--row,col = 101);
+          }
+          else if(row >= 16 && row < 22 && col > 95) {
+            putchar(' ');
+            Body[(row - 16) * 25 + col - 95] = ' ';
+            xt_par2(XT_SET_ROW_COL_POS,row,--col);
+          }
+          else if(row == 16 && col == 95) {
+            putchar(' ');
+            Body[(row - 16) * 25 + col - 95] = ' ';
+            xt_par2(XT_SET_ROW_COL_POS,row,col);
+          }
+          else if(row > 16 && row < 22 && col == 95) {
+            putchar(' ');
+            Body[(row - 16) * 25 + col - 95] = ' ';
+            xt_par2(XT_SET_ROW_COL_POS,--row,col = 119);
           }
         } 
-        else if(c == KEY_BACKSPACE && col == 95 && row > 13 && row < 26){
-        	xt_par2(XT_SET_ROW_COL_POS,--row,col=119);
-        	putchar(' ');
-        	xt_par2(XT_SET_ROW_COL_POS,row,col);
-        }
-        else if(c == KEY_DELETE) {
-        	putchar(' ');
-        	xt_par2(XT_SET_ROW_COL_POS,row,col);
-        }
         else if((c >= ' ' && c <= '~') && col >= 95 && col < 120){
         	//putchar(c); 
           if(row == 9 && col < 112) {
             putchar(c);
+            Category[col - 95] = c;
             xt_par2(XT_SET_ROW_COL_POS,row,++col);
           }
           else if(row == 9 && col == 112) {
             putchar(c);
+            Category[col - 95] = c;
             xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
-          else if(row == 12 && col < 102) {
+          else if(row == 12 && col < 101) {
             putchar(c);
+            Title[col - 95] = c;
             xt_par2(XT_SET_ROW_COL_POS,row,++col);
           }
-          else if(row == 12 && col == 102) {
+          else if(row == 12 && col == 101) {
             putchar(c);
+            Title[col - 95] = c;
             xt_par2(XT_SET_ROW_COL_POS,++row,col=95);
           }
           else if(row == 13 && col < 112) {
             putchar(c);
+            Title[col - 88] = c;
             xt_par2(XT_SET_ROW_COL_POS,row,++col);
           }
           else if(row == 13 && col == 112) {
             putchar(c);
+            Title[col - 88] = c;
             xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
           else if(row >= 16 && row < 21 && col < 119) {
             putchar(c);
+            Body[(row - 16) * 25 + col - 95] = c;
             xt_par2(XT_SET_ROW_COL_POS,row,++col);
           }
           else if(row >= 16 && row < 21 && col == 119) {
             putchar(c);
+            Body[(row - 16) * 25 + col - 95] = c;
             xt_par2(XT_SET_ROW_COL_POS,++row,col = 95);
           }
           else if(row == 21 && col < 109) {
             putchar(c);
+            Body[(row - 16) * 25 + col - 95] = c;
             xt_par2(XT_SET_ROW_COL_POS,row,++col);
           }
           else if(row == 21 && col == 109) {
             putchar(c);
+            Body[(row - 16) * 25 + col - 95] = c;
             xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
         }
@@ -788,15 +820,23 @@ int main() {
         	}
         }
         else if (c == KEY_F7){
-          int reset = 0;
-          for(reset; reset < 18; reset++) Title[reset] = ' ';
-          reset = 0;
-          for(reset; reset < 140; reset++) Body[reset] = ' ';
-          reset = 0;
-          for(reset; reset < 29; reset++) Category[reset] = ' ';
-        	if(col < 95) xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
-        	else xt_par2(XT_SET_ROW_COL_POS,row = SUBJECT,col = 2);   
-        } 
+        	if(col < 95) {
+            xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
+            int reset = 0;
+            for(reset; reset < 18; reset++) Title[reset] = ' ';
+            reset = 0;
+            for(reset; reset < 140; reset++) Body[reset] = ' ';
+            reset = 0;
+            for(reset; reset < 29; reset++) Category[reset] = ' ';
+          }
+        	else if(Title[0] == ' ' && Body[0] == ' ' && Category[0] == ' ') {
+            xt_par2(XT_SET_ROW_COL_POS,row = SUBJECT,col = 2);
+          }
+          else if(Title[0] != ' ' || Body[0] != ' ' || Category[0] != ' ') {
+            clearSearch();
+            searchResults(0);
+          }
+        }
     }
     if (screen == 1 || screen == 2){
       int reset = 0;
