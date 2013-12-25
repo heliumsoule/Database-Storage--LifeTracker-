@@ -366,9 +366,6 @@ void searchResults(int range){
   //struct ArrayRecords *catStorage; 
   catStorage = (struct ArrayRecords*)malloc((maxRecord) * sizeof(struct ArrayRecords));
   for(i = 0; i < maxRecord; i++){
-    int a = strlen(Title);
-    int b = strlen(Body);
-    int c = strlen(Category);
     if(strstr(dataStorage[i].subject, Title) != NULL &&
        strstr(dataStorage[i].body, Body) != NULL &&
        strstr(dataStorage[i].category, Category) != NULL) { 
@@ -628,9 +625,9 @@ int main() {
             else if(recordView < tempCounter-4){ 
               ++recordView;
               if(search == 1) searchResults(recordView);
-  	        else updateRecords(recordView);
-              xt_par2(XT_SET_ROW_COL_POS,row=22,col);
-              ++currentRecord;
+    	        else updateRecords(recordView);
+                xt_par2(XT_SET_ROW_COL_POS,row=22,col);
+                ++currentRecord;
             }
           }
         	if(col > 94 && col < 120){
@@ -840,6 +837,7 @@ int main() {
           else if(Title[0] != ' ' || Body[0] != ' ' || Category[0] != ' ') {
             clearSearch();
             searchResults(0);
+            search = 1;
             xt_par2(XT_SET_ROW_COL_POS,row = 7, col = 20);
           }
         }
