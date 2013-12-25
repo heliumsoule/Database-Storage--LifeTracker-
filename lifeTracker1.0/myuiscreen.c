@@ -4,7 +4,7 @@
 #include "xterm_control.h"
 #include "keyboard.h"
 #include <unistd.h> 
-
+//TESTING TESTING
 int row, col;                         //120 x 28                                
 int i, j;                            //counters.
 int screen = 0;                     //screen toggler, 0, 1, or 2 to determine which screen to be on (main, add, or edit)      
