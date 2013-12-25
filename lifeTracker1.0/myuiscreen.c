@@ -4,41 +4,44 @@
 #include "xterm_control.h"
 #include "keyboard.h"
 #include <unistd.h> 
-int row, col;   //120 x 28                                
-int i, j;                  
-int screen = 0;                                
-int SUBJECT = 8;   
-char input[1000];
-char Category[18];
-char Title[29];
-char Body[141];
-int recordView = 0; //first record shown on the screen (-1)
-int maxRecord;
-int currentRecord = 0;
-struct Stat {
+
+int row, col;                         //120 x 28                                
+int i, j;                            //counters.
+int screen = 0;                     //screen toggler, 0, 1, or 2 to determine which screen to be on (main, add, or edit)      
+int CATEGORY = 8;                  //CATEGORY determines which category the user is on.
+char input[1000];                 //input is the char array that takes the array of strings from myStore.
+char Category[18];                   //Category, Title and Body on screen = 0, take the input from Search and sends them to catStorage,
+char Title[29];                     //a temporary array that houses the records with the matching parameters. In screen = 1, C, T, and B 
+char Body[141];                    //function as parameters for the record to be added, and on screen = 2, to be edited.
+int recordView = 0;               //displays which record the user is on. Subtract one from the record number to determine recordView.
+int maxRecord;                   //The total number of records, acting as the upper bound in for loops and the such. 
+int currentRecord = 0;              //What is the current record that the user is on?
+struct Stat {                      //Struct to store each of the parameters, title, body, category, and timedate as a name value pair.
   char *name;
   char *value;
 };
-struct Stat *data;
-struct Stat *record;
-struct ArrayRecords {
+struct Stat *data;              //Struct to determine the maximum number of records.
+struct Stat *record;           //Struct to parse the input for records.
+struct ArrayRecords {               //Struct to hold each of the record entries with a subject, body, category and timedate.
   char *subject;
   char *body;
   char *category;
   char *timedate; 
 };
-struct ArrayRecords *dataStorage;
-struct realCategory{
+struct ArrayRecords *dataStorage;       //dataStorage, the master array that houses every record.
+struct realCategory{                   //realCategory determines the array of categories.
   char *category;
 };
-struct realCategory *categoryList;
-struct ArrayRecords *catStorage; 
-int catCounter;
-int tempCounter; //keeps track of max at total category
-int sort = 0; //0: By time, 1: Alphabetically
-int search = 0; //0: off 1: on
-int total;
+struct realCategory *categoryList;   //List of every category that the user creates.
+struct ArrayRecords *catStorage;    //Represents what is in each of the categories. 
+int catCounter;                    //The total number of categories.
+int tempCounter;                  //Current number of records in the current category.
+int sort = 0;                    //Toggle switch for sorting. 0 is chronologically, 1 is alphabetically.
+int search = 0;                 //Toggle switch for searching. 1 is ON, 0 is OFF. If on, then search will scroll through the special "category" of search items
+int total;                     //The total number of name value pairs.
 
+//Function to determine the maximum number of records (from myui1)
+//by separating the input into name value pairs stored in data
 void parseInputForStat(){
   int i;
   char *p;
@@ -70,6 +73,7 @@ void parseInputForStat(){
   maxRecord = atoi(data[3].value);
 }
 
+//Same as parseInputForStat() except for records
 void recordsHelper(){
   int i;
   char *p;
@@ -98,6 +102,8 @@ void recordsHelper(){
   }
 }
 
+//Takes the updated records struct in recordsHelper and stores it into dataStorage,
+//the master array.
 int parseInputForRecords(int counter) {
   char c;
   int i;
@@ -123,6 +129,9 @@ int parseInputForRecords(int counter) {
     strcpy(dataStorage[i].category, ARGD); 
   }
 }
+
+//Function to pipe from myStore, a TEXT database and myuiscreen.
+//Modifications include considering more arguments, and changing execvp.
 int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5) {
   int pid, mypipe[2];
   char *newargv[7];
@@ -182,6 +191,99 @@ int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4, cha
   return n_input;
 }
 
+//Determines the maxRecord, and uses that to setup the master array, dataStorage.
+int setStat(){
+  readmyStoreFromChild("stat", NULL, NULL, NULL, NULL); 
+  parseInputForStat();
+  parseInputForRecords(maxRecord); 
+}
+
+//Creates the text representation of myuiscreen by using ASCII art.
+void setup() {                    //print using myui (stat)
+  xt_par0(XT_CLEAR_SCREEN);
+  setStat();
+  xt_par2(XT_SET_ROW_COL_POS, row = 1, col = 1);
+  xt_par0(XT_CH_GREEN);
+  printf("-------------------------------------------------------LifeTracker------------------------------------------------------");
+  xt_par0(XT_CH_WHITE);
+  xt_par2(XT_SET_ROW_COL_POS, row = 2, col = 35);
+  printf("Number of Records: %s |  Author: %s | Version: %s ", data[3].value, data[2].value, data[1].value);
+  xt_par2(XT_SET_ROW_COL_POS,row = 3, col = 24);
+  printf("First Record  Time: %s | Last Record  Time: %s", data[4].value, data[5].value);
+  xt_par2(XT_SET_ROW_COL_POS, row = 4, col = 1);
+  printf("------------------------------------------------------------------------------------------------------------------------");
+  xt_par2(XT_SET_ROW_COL_POS, row = 5, col = 1);
+  xt_par0(XT_CH_BLUE);
+  if(screen == 0)
+    printf("------------UP/Down-Scroll between Subjects/Records/Search Left/Right-Toggle between Subjects/Records/Search------------");
+  else if(screen == 1 || screen == 2)
+    printf("-------------------------------------UP/Down-Switch rows Left/Right-Switch columns--------------------------------------");
+  else
+    printf("------------------------------------------------------------------------------------------------------------------------");
+  xt_par0(XT_CH_WHITE);
+  xt_par2(XT_SET_ROW_COL_POS, row = 7, col = 21); 
+}
+
+//Function to update the screen by displaying the correct records when the user scrolls
+//up and down. The maximum number of records displayed at any time is four, from range to
+//range + four. 
+void updateRecords(int range){
+  free(catStorage);
+  int trow, tcol;
+  char TempBodyA[71];
+  char TempBodyB[71];
+  int r;
+  int i;
+  for(i = 6; i <= 25; i++){
+    xt_par2(XT_SET_ROW_COL_POS,trow=i,tcol=20);
+    printf("                                                                       ");
+  }  
+  tempCounter = 0;
+  //struct ArrayRecords *catStorage; 
+  catStorage = (struct ArrayRecords*)malloc((maxRecord) * sizeof(struct ArrayRecords));
+  for(i = 0; i < maxRecord; i++){
+    if(strcmp(dataStorage[i].category, categoryList[CATEGORY-8].category) == 0){
+      catStorage[tempCounter] = dataStorage[i];
+      tempCounter++;
+    }
+  }
+  i = 0;
+  for(r = range; r < 4+range; r++){
+    if(r < tempCounter){
+      int k = 0;
+      while(k != 70) {
+        TempBodyA[k] = ' ';
+        TempBodyB[k] = ' ';
+        k++;
+      }
+      TempBodyA[70] = '\0';
+      TempBodyB[70] = '\0';
+      k = 0;
+      xt_par2(XT_SET_ROW_COL_POS, trow = 7+5*i, tcol = 20);
+      xt_par0(XT_CH_GREEN);
+      printf("Record %d (%s)", r+1, catStorage[r].timedate); //get the time using myui1
+      xt_par0(XT_CH_WHITE);
+      xt_par2(XT_SET_ROW_COL_POS, trow = 8+5*i, tcol = 20);
+      int j = 0;
+      while(catStorage[r].body[j] != '\0'){
+        if(j < 70) TempBodyA[j] = catStorage[r].body[j];
+        else if(j < 140) TempBodyB[j%70] = catStorage[r].body[j];
+        j++;
+      }
+      xt_par0(XT_CH_GREEN);
+      printf("%s", catStorage[r].subject);
+      xt_par0(XT_CH_WHITE);
+      xt_par2(XT_SET_ROW_COL_POS, trow = 9+5*i, tcol = 20);
+      printf("%s", TempBodyA);
+      xt_par2(XT_SET_ROW_COL_POS, trow = 10+5*i, tcol = 20);
+      printf("%s", TempBodyB);
+      i++;
+    }
+  }
+  xt_par2(XT_SET_ROW_COL_POS,row,col);
+}
+
+//Creates an array of every category in the myStore database.
 void fillCategory(){
   free(categoryList);
   categoryList = (struct realCategory*)malloc((maxRecord) * sizeof(struct realCategory));
@@ -206,7 +308,7 @@ void fillCategory(){
       	break;
       }
     }
-    if(temp == 0){                                                         //if the record has gone through the above loop without "breaking"
+    if(temp == 0){                                                          //if the record has gone through the above loop without "breaking"
       categoryList[j].category = dataStorage[i].category;                   //add that record's category to the list
       catCounter++;
     }
@@ -214,6 +316,8 @@ void fillCategory(){
   }
 }
 
+//removeBlanks() removes the ' ' characters in the arrays, Title, Body and Category
+//by putting a null byte at the last occurence of a character.
 void removeBlanks() {
   for(i = 0; i < 18; i++) {
     if(Category[i] == '\0') break;
@@ -261,95 +365,8 @@ void removeBlanks() {
   }
 }
 
-int setStat(){
-  readmyStoreFromChild("stat", NULL, NULL, NULL, NULL); 
-  parseInputForStat();
-  int count = atoi(data[3].value); 
-  parseInputForRecords(maxRecord); 
-}
-
-void setup() {                    //print using myui (stat)
-  xt_par0(XT_CLEAR_SCREEN);
-  setStat();
-  xt_par2(XT_SET_ROW_COL_POS, row = 1, col = 1);
-  xt_par0(XT_CH_GREEN);
-  printf("-------------------------------------------------------LifeTracker------------------------------------------------------");
-  xt_par0(XT_CH_WHITE);
-  xt_par2(XT_SET_ROW_COL_POS, row = 2, col = 35);
-  printf("Number of Records: %s |  Author: %s | Version: %s ", data[3].value, data[2].value, data[1].value);
-  xt_par2(XT_SET_ROW_COL_POS,row = 3, col = 24);
-  printf("First Record  Time: %s | Last Record  Time: %s", data[4].value, data[5].value);
-  xt_par2(XT_SET_ROW_COL_POS, row = 4, col = 1);
-  printf("------------------------------------------------------------------------------------------------------------------------");
-  xt_par2(XT_SET_ROW_COL_POS, row = 5, col = 1);
-  xt_par0(XT_CH_BLUE);
-  if(screen == 0)
-    printf("------------UP/Down-Scroll between Subjects/Records/Search Left/Right-Toggle between Subjects/Records/Search------------");
-  else if(screen == 1 || screen == 2)
-    printf("-------------------------------------UP/Down-Switch rows Left/Right-Switch columns--------------------------------------");
-  else
-    printf("------------------------------------------------------------------------------------------------------------------------");
-  xt_par0(XT_CH_WHITE);
-  xt_par2(XT_SET_ROW_COL_POS, row = 7, col = 21); 
-}
-
-void updateRecords(int range){
-  free(catStorage);
-  int trow, tcol;
-  char TempBodyA[71];
-  char TempBodyB[71];
-  int r;
-  int i;
-  for(i = 6; i <= 25; i++){
-    xt_par2(XT_SET_ROW_COL_POS,trow=i,tcol=20);
-    printf("                                                                       ");
-  }  
-  tempCounter = 0;
-  //struct ArrayRecords *catStorage; 
-  catStorage = (struct ArrayRecords*)malloc((maxRecord) * sizeof(struct ArrayRecords));
-  for(i = 0; i < maxRecord; i++){
-    if(strcmp(dataStorage[i].category, categoryList[SUBJECT-8].category) == 0){
-      catStorage[tempCounter] = dataStorage[i];
-      tempCounter++;
-    }
-  }
-  i = 0;
-  for(r = range; r < 4+range; r++){
-    if(r < tempCounter){
-      int k = 0;
-      while(k != 70) {
-      	TempBodyA[k] = ' ';
-      	TempBodyB[k] = ' ';
-      	k++;
-      }
-      TempBodyA[70] = '\0';
-      TempBodyB[70] = '\0';
-      k = 0;
-      xt_par2(XT_SET_ROW_COL_POS, trow = 7+5*i, tcol = 20);
-      xt_par0(XT_CH_GREEN);
-      printf("Record %d (%s)", r+1, catStorage[r].timedate); //get the time using myui1
-      xt_par0(XT_CH_WHITE);
-      xt_par2(XT_SET_ROW_COL_POS, trow = 8+5*i, tcol = 20);
-      int j = 0;
-      while(catStorage[r].body[j] != '\0'){
-      	if(j < 70) TempBodyA[j] = catStorage[r].body[j];
-      	else if(j < 140) TempBodyB[j%70] = catStorage[r].body[j];
-      	j++;
-      }
-      xt_par0(XT_CH_GREEN);
-      printf("%s", catStorage[r].subject);
-      xt_par0(XT_CH_WHITE);
-      xt_par2(XT_SET_ROW_COL_POS, trow = 9+5*i, tcol = 20);
-      printf("%s", TempBodyA);
-      xt_par2(XT_SET_ROW_COL_POS, trow = 10+5*i, tcol = 20);
-      printf("%s", TempBodyB);
-      i++;
-    }
-  }
-  xt_par2(XT_SET_ROW_COL_POS,row,col);
-  //free(catStorage);
-}
-
+//The function to loop through dataStorage to determine the records that match 
+//the input parameters for T, B, and C in Search.
 void searchResults(int range){
   free(catStorage);
   int trow, tcol;
@@ -408,66 +425,9 @@ void searchResults(int range){
     }
   }
   xt_par2(XT_SET_ROW_COL_POS,row,col);
-  //free(catStorage);
 }
 
-void bubbleSort() {
-  int a = 0, b = 0;
-  for(a = 0; a < maxRecord - 1; a++) {
-    for(b = 0; b < maxRecord - a - 1; b++) {
-      if(strcmp(dataStorage[b].subject,dataStorage[b+1].subject) > 0 && 
-         strcmp(dataStorage[b].category,dataStorage[b+1].category) == 0) {
-      	 struct ArrayRecords temp;
-      	temp = dataStorage[b+1];
-      	dataStorage[b+1] = dataStorage[b];
-      	dataStorage[b] = temp;
-      }
-    }
-  } 
-  for(i = 0; i < 18; i++){
-    xt_par2(XT_SET_ROW_COL_POS, row = 8 + i, col = 2);
-    if(i < catCounter){
-      printf("              ");
-      xt_par2(XT_SET_ROW_COL_POS, row = 8 + i, col = 2);
-      printf("%s", categoryList[i].category);
-    }
-    else printf("--------------");  //prints the list of subjects, utilizes the forking program/myui1  cmd(mystore, subject, i+1)
-  }
-  recordView = currentRecord = 0;
-  xt_par2(XT_SET_ROW_COL_POS,row = 8, col = 2);
-  SUBJECT = row;
-  updateRecords(0);
-}
-
-void bubbleSortTime() {
-  int a = 0, b = 0;
-  for(a = 0; a < maxRecord - 1; a++) {
-    for(b = 0; b < maxRecord - a - 1; b++) {
-      if(strcmp(dataStorage[b].timedate,dataStorage[b+1].timedate) > 0 && 
-         strcmp(dataStorage[b].category,dataStorage[b+1].category) == 0) {
-      	struct ArrayRecords temp;
-      	temp = dataStorage[b+1];
-      	dataStorage[b+1] = dataStorage[b];
-      	dataStorage[b] = temp;
-      }
-    }
-  } 
-  for(i = 0; i < 18; i++){
-    xt_par2(XT_SET_ROW_COL_POS, row = 8 + i, col = 2);
-    if(i < catCounter){
-      printf("              ");
-      xt_par2(XT_SET_ROW_COL_POS, row = 8 + i, col = 2);
-      printf("%s", categoryList[i].category);
-    }
-    else printf("--------------");  //prints the list of subjects, utilizes the forking program/myui1  cmd(mystore, subject, i+1)
-  }
-  recordView = currentRecord = 0;
-  //updateRecords(0);
-  xt_par2(XT_SET_ROW_COL_POS,row = 8, col = 2);
-  SUBJECT = row;
-  updateRecords(0);
-}
-
+//Clears the search after the user exits from that portion of the screen.
 void clearSearch(){
   //insert code for resetting Title, Category, and Body (for some reason we have several versions of this)
   int trow, tcol;
@@ -494,6 +454,66 @@ void clearSearch(){
   xt_par2(XT_SET_ROW_COL_POS, row, col);
 }
 
+//Alphabetical sorting with bubbleSort.
+void bubbleSort() {
+  int a = 0, b = 0;
+  for(a = 0; a < maxRecord - 1; a++) {
+    for(b = 0; b < maxRecord - a - 1; b++) {
+      if(strcmp(dataStorage[b].subject,dataStorage[b+1].subject) > 0 && 
+         strcmp(dataStorage[b].category,dataStorage[b+1].category) == 0) {
+      	 struct ArrayRecords temp;
+      	temp = dataStorage[b+1];
+      	dataStorage[b+1] = dataStorage[b];
+      	dataStorage[b] = temp;
+      }
+    }
+  } 
+  for(i = 0; i < 18; i++){
+    xt_par2(XT_SET_ROW_COL_POS, row = 8 + i, col = 2);
+    if(i < catCounter){
+      printf("              ");
+      xt_par2(XT_SET_ROW_COL_POS, row = 8 + i, col = 2);
+      printf("%s", categoryList[i].category);
+    }
+    else printf("--------------");  //prints the list of subjects, utilizes the forking program/myui1  cmd(mystore, subject, i+1)
+  }
+  recordView = currentRecord = 0;
+  xt_par2(XT_SET_ROW_COL_POS,row = 8, col = 2);
+  CATEGORY = row;
+  updateRecords(0);
+}
+
+//Chronological sorting with bubbleSort.
+void bubbleSortTime() {
+  int a = 0, b = 0;
+  for(a = 0; a < maxRecord - 1; a++) {
+    for(b = 0; b < maxRecord - a - 1; b++) {
+      if(strcmp(dataStorage[b].timedate,dataStorage[b+1].timedate) > 0 && 
+         strcmp(dataStorage[b].category,dataStorage[b+1].category) == 0) {
+      	struct ArrayRecords temp;
+      	temp = dataStorage[b+1];
+      	dataStorage[b+1] = dataStorage[b];
+      	dataStorage[b] = temp;
+      }
+    }
+  } 
+  for(i = 0; i < 18; i++){
+    xt_par2(XT_SET_ROW_COL_POS, row = 8 + i, col = 2);
+    if(i < catCounter){
+      printf("              ");
+      xt_par2(XT_SET_ROW_COL_POS, row = 8 + i, col = 2);
+      printf("%s", categoryList[i].category);
+    }
+    else printf("--------------");  //prints the list of subjects, utilizes the forking program/myui1  cmd(mystore, subject, i+1)
+  }
+  recordView = currentRecord = 0;
+  //updateRecords(0);
+  xt_par2(XT_SET_ROW_COL_POS,row = 8, col = 2);
+  CATEGORY = row;
+  updateRecords(0);
+}
+
+//Function for printing the main screen (everything on the main screne)
 void lifeTracker() {
   setup();
   for(i = 0; i < 20; i++){
@@ -535,9 +555,10 @@ void lifeTracker() {
   xt_par0(XT_CH_BLUE);
   printf("---------------------------------------------------------F9-EXIT--------------------------------------------------------");
   xt_par0(XT_CH_WHITE);
-  xt_par2(XT_SET_ROW_COL_POS,row=SUBJECT,col=2);
+  xt_par2(XT_SET_ROW_COL_POS,row=CATEGORY,col=2);
 }
 
+//Displays the screen to be implemented for add and edit.
 void addScreen(){
   setup();
   
@@ -568,6 +589,8 @@ void addScreen(){
   xt_par2(XT_SET_ROW_COL_POS,row = 14, col = 25);
 }
 
+//Displays the screen for deleting a record. User will only be able to delete a record
+//after pressing F3 two times, to ascertain that she wants to delete the record.
 void deleteScreen(){
   setup();
   
@@ -598,11 +621,12 @@ void deleteScreen(){
   xt_par2(XT_SET_ROW_COL_POS,row = 14, col = 25);
 }
 
+//Huge main function.
 int main() {
   int c;
   while(1){
     if(screen == 0){ 
-      SUBJECT = 8;
+      CATEGORY = 8;
       currentRecord = 0;
       recordView = 0;
       updateRecords(0);
@@ -614,7 +638,7 @@ int main() {
         else if(c == KEY_F3) screen = 4;
         else if(c == KEY_DOWN) {
           if(col == 2 && row >= 8 && row < catCounter + 7){ 
-            xt_par2(XT_SET_ROW_COL_POS,SUBJECT = ++row,col);
+            xt_par2(XT_SET_ROW_COL_POS,CATEGORY = ++row,col);
   	        updateRecords(recordView);
   	      }
           if(col == 20 && row >= 7 && row <= tempCounter * 5 + 1){
@@ -647,7 +671,7 @@ int main() {
         }
         else if(c == KEY_UP){
           if(col == 2 && row > 8 && row <= 18){
-            xt_par2(XT_SET_ROW_COL_POS,SUBJECT = --row,col);
+            xt_par2(XT_SET_ROW_COL_POS,CATEGORY = --row,col);
         	  updateRecords(recordView);
         	}
           if(col == 20 && row >= 7 && row < 24){
@@ -676,12 +700,12 @@ int main() {
         }
         else if(c == KEY_ENTER && col > 94 && col < 120 && row > 12 && row < 18) xt_par2(XT_SET_ROW_COL_POS,++row,col=95);
         else if((c == KEY_LEFT || c == KEY_RIGHT) && col == 2) {
-        	SUBJECT = row;
+        	CATEGORY = row;
         	updateRecords(recordView);
         	xt_par2(XT_SET_ROW_COL_POS,row=7,col=20);
         }
         else if((c == KEY_LEFT || c == KEY_RIGHT) && col == 20) {
-          xt_par2(XT_SET_ROW_COL_POS,row=SUBJECT,col=2);
+          xt_par2(XT_SET_ROW_COL_POS,row=CATEGORY,col=2);
           if (search == 1) clearSearch();
           currentRecord = recordView = search = 0;
   	      updateRecords(recordView);
@@ -832,7 +856,9 @@ int main() {
             for(reset; reset < 29; reset++) Category[reset] = ' ';
           }
         	else if(Title[0] == ' ' && Body[0] == ' ' && Category[0] == ' ') {
-            xt_par2(XT_SET_ROW_COL_POS,row = SUBJECT,col = 2);
+            xt_par2(XT_SET_ROW_COL_POS,row = CATEGORY,col = 2);
+            clearSearch();
+            updateRecords(0);
           }
           else if(Title[0] != ' ' || Body[0] != ' ' || Category[0] != ' ') {
             clearSearch();
@@ -1010,7 +1036,7 @@ int main() {
     	  if(strcmp(catStorage[currentRecord].subject, dataStorage[i].subject) == 0 &&
     	     strcmp(catStorage[currentRecord].body, dataStorage[i].body) == 0 &&
     	     strcmp(catStorage[currentRecord].category, dataStorage[i].category) == 0 &&
-    	     strcmp(catStorage[currentRecord].timedate, dataStorage[i].timedate) == 0){           //looks for corresponding record in the actual record list
+    	     strcmp(catStorage[currentRecord].timedate, dataStorage[i].timedate) == 0){//looks for corresponding record in the actual record list
     	    sprintf(str, "%d", i+1);
     	    break;
     	  }
