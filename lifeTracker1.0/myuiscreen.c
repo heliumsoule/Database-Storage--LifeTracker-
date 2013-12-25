@@ -365,6 +365,37 @@ void searchResults(int range){
   //struct ArrayRecords *catStorage; 
   catStorage = (struct ArrayRecords*)malloc((maxRecord) * sizeof(struct ArrayRecords));
   for(i = 0; i < maxRecord; i++){
+    int j;
+    for(j = 28; j > 0; j--) {
+      if(j == 0) {
+        Title[0] = '\0';
+        break;
+      }
+      if(Title[j] != ' ') {
+        Title[j+1] = '\0';
+        break;
+      }
+    }
+    for(j = 17; j > 0; j--) {
+      if(j == 0) {
+        Category[0] = '\0';
+        break;
+      }
+      if(Category[j] != ' ') {
+        Category[j+1] = '\0';
+        break;
+      }
+    }
+    for(j = 140; j > 0; j--) {
+      if(j == 0) {
+        Body[0] = '\0';
+        break;
+      }
+      if(Title[j] != ' ') {
+        Title[j+1] = '\0';
+        break;
+      }
+    }
     if(strstr(dataStorage[i].subject, Title) != NULL &&
        strstr(dataStorage[i].body, Body) != NULL &&
        strstr(dataStorage[i].category, Category) != NULL) { 
@@ -373,6 +404,7 @@ void searchResults(int range){
     }
   }
   i = 0;
+  //printf("Is there anything in catStorage? %s\n", catStorage[1].body);
   for(r = range; r < 4+range; r++){
     if(r < tempCounter){
       int k = 0;
