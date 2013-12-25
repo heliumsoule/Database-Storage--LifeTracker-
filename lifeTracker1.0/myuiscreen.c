@@ -357,6 +357,7 @@ void searchResults(int range){
   char TempBodyB[71];
   int r;
   int i;
+  removeBlanks();
   for(i = 6; i <= 25; i++){
     xt_par2(XT_SET_ROW_COL_POS,trow=i,tcol=20);
     printf("                                                                       ");
@@ -365,37 +366,9 @@ void searchResults(int range){
   //struct ArrayRecords *catStorage; 
   catStorage = (struct ArrayRecords*)malloc((maxRecord) * sizeof(struct ArrayRecords));
   for(i = 0; i < maxRecord; i++){
-    int j;
-    for(j = 28; j > 0; j--) {
-      if(j == 0) {
-        Title[0] = '\0';
-        break;
-      }
-      if(Title[j] != ' ') {
-        Title[j+1] = '\0';
-        break;
-      }
-    }
-    for(j = 17; j > 0; j--) {
-      if(j == 0) {
-        Category[0] = '\0';
-        break;
-      }
-      if(Category[j] != ' ') {
-        Category[j+1] = '\0';
-        break;
-      }
-    }
-    for(j = 140; j > 0; j--) {
-      if(j == 0) {
-        Body[0] = '\0';
-        break;
-      }
-      if(Title[j] != ' ') {
-        Title[j+1] = '\0';
-        break;
-      }
-    }
+    int a = strlen(Title);
+    int b = strlen(Body);
+    int c = strlen(Category);
     if(strstr(dataStorage[i].subject, Title) != NULL &&
        strstr(dataStorage[i].body, Body) != NULL &&
        strstr(dataStorage[i].category, Category) != NULL) { 
@@ -867,6 +840,7 @@ int main() {
           else if(Title[0] != ' ' || Body[0] != ' ' || Category[0] != ' ') {
             clearSearch();
             searchResults(0);
+            xt_par2(XT_SET_ROW_COL_POS,row = 7, col = 20);
           }
         }
     }
