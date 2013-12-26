@@ -206,8 +206,8 @@ void setup() {                    //print using myui (stat)
   xt_par0(XT_CH_GREEN);
   printf("-------------------------------------------------------LifeTracker------------------------------------------------------");
   xt_par0(XT_CH_WHITE);
-  xt_par2(XT_SET_ROW_COL_POS, row = 2, col = 35);
-  printf("Number of Records: %s |  Author: %s | Version: %s ", data[3].value, data[2].value, data[1].value);
+  xt_par2(XT_SET_ROW_COL_POS, row = 2, col = 25);
+  printf("Number of Records: %s | Authors: %s | Version: %s ", data[3].value, data[2].value, data[1].value);
   xt_par2(XT_SET_ROW_COL_POS,row = 3, col = 24);
   printf("First Record  Time: %s | Last Record  Time: %s", data[4].value, data[5].value);
   xt_par2(XT_SET_ROW_COL_POS, row = 4, col = 1);

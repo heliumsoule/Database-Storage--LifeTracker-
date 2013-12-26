@@ -7,8 +7,8 @@
     delete
 */
 
-#define version "0.91"
-#define author "PBrooks"
+#define version "1.00"
+#define author "Jing Lin and Matthew Laikhram"
 
 #include <stdio.h>
 #include <stdlib.h>
