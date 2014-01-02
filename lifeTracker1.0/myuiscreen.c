@@ -319,7 +319,7 @@ void fillCategory(){
 //removeBlanks() removes the ' ' characters in the arrays, Title, Body and Category
 //by putting a null byte at the last occurence of a character.
 void removeBlanks() {
-  for(i = 0; i < 18; i++) {
+  /*for(i = 0; i < 18; i++) {
     if(Category[i] == '\0') break;
     if(Category[i] == ' ') {
       j = 0;
@@ -347,22 +347,36 @@ void removeBlanks() {
 	      else if(Title[i+j] != ' ') break;
       }
     }
+  }*/
+  for(i = 0; i < 18; i++){
+    
   }
 
   for(i = 0; i < 140; i++) {
-    if(Body[i] == '\0') break;
-    if(Body[i] == ' ') {
+    if (Body[i] == '\0') Body[i] = ' ';
+    //if(Body[i] == '\0') break;
+    /*if(Body[i] == ' ' || '\0') {
+      Body[i] = ' ';
       j = 0;
-      while(Body[i+j] != '\0') {
-      	j++;
-      	if(Body[i+j] == '\0'){
+      for(j = 0; j+i < 140; j++){}
+        if(Body[i+j] == ' ' || '\0') {
+          Body[i+j] = ' ';
+      	  j++;
+        }
+        else{ 
+          i = j + i;
+          break;
+        }
+      	/*if(Body[i+j] == '\0'){
       	  Body[i] = '\0';
       	  break;
       	}
 	      else if(Body[i+j] != ' ') break;
-      }
-    }
+      
+    }*/
   }
+  if(i > 140) i = 140;
+  Body[i] = '\0';
 }
 
 //The function to loop through dataStorage to determine the records that match 
@@ -629,6 +643,7 @@ int main() {
       CATEGORY = 8;
       currentRecord = 0;
       recordView = 0;
+      xt_par0(XT_CLEAR_SCREEN);
       updateRecords(0);
       lifeTracker();
     }
@@ -947,21 +962,25 @@ int main() {
       	  xt_par2(XT_SET_ROW_COL_POS,row,--col);
       	  putchar(' ');
       	  Category[col - 25] = ' ';
+          if(Category[col - 24] == ' ') Category[col - 24] = '\0';
       	}
       	else if(row == 16 && col > 25 && col <= 54) {
       	  xt_par2(XT_SET_ROW_COL_POS,row,--col);
       	  putchar(' ');
       	  Title[col - 25] = ' ';
+          if(Title[col - 24] == ' ') Category[col - 24] = '\0';
       	}
       	else if(row == 19 && col > 25 && col <= 95) {
       	  xt_par2(XT_SET_ROW_COL_POS,row,--col);
       	  putchar(' ');
       	  Body[col - 25] = ' ';
+          if(Body[col - 24] == ' ') Body[col - 24] = '\0';
       	}
       	else if(row == 20 && col > 25 && col <= 95) {
       	  xt_par2(XT_SET_ROW_COL_POS,row,--col);
       	  putchar(' ');
       	  Body[col + 45] = ' ';
+          if(Body[col + 46] == ' ') Body[col + 46] = '\0';
       	}
       	else if(row == 20){                                          
       	  xt_par2(XT_SET_ROW_COL_POS,--row,col=94);
@@ -1016,7 +1035,7 @@ int main() {
       	}
       }
       else if(c == KEY_F2 && screen == 1 /* && there is a valid title and description */){
-	//save record to corresponding subject
+	    //save record to corresponding subject
 	      removeBlanks();
         readmyStoreFromChild("add", Title, Body, Category, NULL);
         int k = 0;
