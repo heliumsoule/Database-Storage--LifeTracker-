@@ -349,7 +349,7 @@ void removeBlanks() {
     }
   }*/
   for(i = 0; i < 18; i++){
-    
+
   }
 
   for(i = 0; i < 140; i++) {
@@ -644,8 +644,8 @@ int main() {
       currentRecord = 0;
       recordView = 0;
       xt_par0(XT_CLEAR_SCREEN);
-      updateRecords(0);
       lifeTracker();
+      updateRecords(0);
     }
     while(screen == 0) {
       while((c = getkey()) == KEY_NOTHING);
