@@ -349,11 +349,22 @@ void removeBlanks() {
     }
   }*/
   for(i = 0; i < 18; i++){
-
+if (Category[i] == '\0') Category[i] = ' ';
   }
+  if(i > 18) i = 18;
+  Category[i] = '\0';
+for(i = 0; i < 18; i++){
+if (Title[i] == '\0') Title[i] = ' ';
+  }
+  if(i > 18) i = 18;
+  Title[i] = '\0';
 
   for(i = 0; i < 140; i++) {
     if (Body[i] == '\0') Body[i] = ' ';
+  }
+  if(i > 140) i = 140;
+  Body[i] = '\0';
+}
     //if(Body[i] == '\0') break;
     /*if(Body[i] == ' ' || '\0') {
       Body[i] = ' ';
@@ -374,10 +385,8 @@ void removeBlanks() {
 	      else if(Body[i+j] != ' ') break;
       
     }*/
-  }
-  if(i > 140) i = 140;
-  Body[i] = '\0';
-}
+  
+  
 
 //The function to loop through dataStorage to determine the records that match 
 //the input parameters for T, B, and C in Search.
