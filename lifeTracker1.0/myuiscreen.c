@@ -10,7 +10,7 @@ int i, j;                            //counters.
 int screen = 0;                     //screen toggler, 0, 1, or 2 to determine which screen to be on (main, add, or edit)      
 int CATEGORY = 8;                  //CATEGORY determines which category the user is on.
 char input[1000];                 //input is the char array that takes the array of strings from myStore.
-char Category[18];                   //Category, Title and Body on screen = 0, take the input from Search and sends them to catStorage,
+char Category[14];                   //Category, Title and Body on screen = 0, take the input from Search and sends them to catStorage,
 char Title[29];                     //a temporary array that houses the records with the matching parameters. In screen = 1, C, T, and B 
 char Body[141];                    //function as parameters for the record to be added, and on screen = 2, to be edited.
 int recordView = 0;               //displays which record the user is on. Subtract one from the record number to determine recordView.
@@ -209,7 +209,8 @@ void setup() {                    //print using myui (stat)
   xt_par2(XT_SET_ROW_COL_POS, row = 2, col = 25);
   printf("Number of Records: %s | Authors: %s | Version: %s ", data[3].value, data[2].value, data[1].value);
   xt_par2(XT_SET_ROW_COL_POS,row = 3, col = 24);
-  printf("First Record  Time: %s | Last Record  Time: %s", data[4].value, data[5].value);
+  if(maxRecord != 0) printf("First Record  Time: %s | Last Record  Time: %s", data[4].value, data[5].value);
+  else printf("First Record Time: (null) | Last Record Time: (null)" );
   xt_par2(XT_SET_ROW_COL_POS, row = 4, col = 1);
   printf("------------------------------------------------------------------------------------------------------------------------");
   xt_par2(XT_SET_ROW_COL_POS, row = 5, col = 1);
@@ -319,75 +320,39 @@ void fillCategory(){
 //removeBlanks() removes the ' ' characters in the arrays, Title, Body and Category
 //by putting a null byte at the last occurence of a character.
 void removeBlanks() {
-  /*for(i = 0; i < 18; i++) {
-    if(Category[i] == '\0') break;
-    if(Category[i] == ' ') {
-      j = 0;
-      while(Category[i+j] != '\0') {
-      	j++;
-      	if(Category[i+j] == '\0'){
-      	  Category[i] = '\0';
-      	  break;
-      	}
-	      else if(Category[i+j] != ' ') break;
-      }
+  int end;
+  for(i = 13; i >= 0; i--){
+    if(Category[i] > ' ' && Category[i] <= '~'){
+      end = i+1;
+      if (end < 14) Category[end] = '\0';
+      break;
     }
   }
-    
-  for(i = 0; i < 29; i++) {
-    if(Title[i] == '\0') break;
-    if(Title[i] == ' ') {
-      j = 0;
-      while(Title[i+j] != '\0') {
-      	j++;
-      	if(Title[i+j] == '\0'){
-      	  Title[i] = '\0';
-      	  break;
-      	}
-	      else if(Title[i+j] != ' ') break;
-      }
+  for(i = 0; i < end; i++){
+    if(Category[i] == '\0') Category[i] = ' ';
+  }
+  for(i = 28; i >= 0; i--){
+    if(Title[i] > ' ' && Title[i] <= '~'){
+      end = i+1;
+      if (end < 29) Title[end] = '\0';
+      break;
     }
-  }*/
-  for(i = 0; i < 18; i++){
-if (Category[i] == '\0') Category[i] = ' ';
   }
-  if(i > 18) i = 18;
-  Category[i] = '\0';
-for(i = 0; i < 18; i++){
-if (Title[i] == '\0') Title[i] = ' ';
+  for(i = 0; i < end; i++){
+    if(Title[i] == '\0') Title[i] = ' ';
   }
-  if(i > 18) i = 18;
-  Title[i] = '\0';
-
-  for(i = 0; i < 140; i++) {
-    if (Body[i] == '\0') Body[i] = ' ';
+  for(i = 139; i >= 0; i--){
+    if(Body[i] > ' ' && Body[i] <= '~'){
+      end = i+1;
+      if (end < 140) Body[end] = '\0';
+      break;
+    }
   }
-  if(i > 140) i = 140;
-  Body[i] = '\0';
+  for(i = 0; i < end; i++){
+    if(Body[i] == '\0') Body[i] = ' ';
+  }
 }
-    //if(Body[i] == '\0') break;
-    /*if(Body[i] == ' ' || '\0') {
-      Body[i] = ' ';
-      j = 0;
-      for(j = 0; j+i < 140; j++){}
-        if(Body[i+j] == ' ' || '\0') {
-          Body[i+j] = ' ';
-      	  j++;
-        }
-        else{ 
-          i = j + i;
-          break;
-        }
-      	/*if(Body[i+j] == '\0'){
-      	  Body[i] = '\0';
-      	  break;
-      	}
-	      else if(Body[i+j] != ' ') break;
-      
-    }*/
   
-  
-
 //The function to loop through dataStorage to determine the records that match 
 //the input parameters for T, B, and C in Search.
 void searchResults(int range){
@@ -659,7 +624,7 @@ int main() {
     while(screen == 0) {
       while((c = getkey()) == KEY_NOTHING);
         if(c == KEY_F9) screen = 3;
-        else if(c == KEY_F3) screen = 4;
+        else if(c == KEY_F3 && maxRecord > 0) screen = 4;
         else if(c == KEY_DOWN) {
           if(col == 2 && row >= 8 && row < catCounter + 7){ 
             xt_par2(XT_SET_ROW_COL_POS,CATEGORY = ++row,col);
@@ -961,35 +926,31 @@ int main() {
       }
       else if(c == KEY_LEFT && col > 25 && col < 95) xt_par2(XT_SET_ROW_COL_POS,row,--col);
       else if(c == KEY_LEFT && col == 25 && row == 20) xt_par2(XT_SET_ROW_COL_POS,--row,col=94);
-      else if(c == KEY_RIGHT && col > 24 && col < 43 && row == 14) xt_par2(XT_SET_ROW_COL_POS,row,++col);
+      else if(c == KEY_RIGHT && col > 24 && col < 39 && row == 14) xt_par2(XT_SET_ROW_COL_POS,row,++col);
       else if(c == KEY_RIGHT && col > 24 && col < 54 && row == 16) xt_par2(XT_SET_ROW_COL_POS,row,++col);
       else if(c == KEY_RIGHT && col > 24 && col < 94 && row > 18) xt_par2(XT_SET_ROW_COL_POS,row,++col);
       else if(c == KEY_RIGHT && col == 94 && row == 19) xt_par2(XT_SET_ROW_COL_POS,++row,col=25);   
       else if (c == KEY_ENTER && row > 18 && row < 20) xt_par2(XT_SET_ROW_COL_POS,++row,col=25);      
       else if (c == KEY_BACKSPACE && col >= 25 && col < 95 && ((row > 18 && row < 21) || row == 16 || row == 14)){
-      	if(row == 14 && col > 25 && col <= 43) {
+      	if(row == 14 && col > 25 && col <= 39) {
       	  xt_par2(XT_SET_ROW_COL_POS,row,--col);
       	  putchar(' ');
       	  Category[col - 25] = ' ';
-          if(Category[col - 24] == ' ') Category[col - 24] = '\0';
       	}
       	else if(row == 16 && col > 25 && col <= 54) {
       	  xt_par2(XT_SET_ROW_COL_POS,row,--col);
       	  putchar(' ');
       	  Title[col - 25] = ' ';
-          if(Title[col - 24] == ' ') Category[col - 24] = '\0';
       	}
       	else if(row == 19 && col > 25 && col <= 95) {
       	  xt_par2(XT_SET_ROW_COL_POS,row,--col);
       	  putchar(' ');
       	  Body[col - 25] = ' ';
-          if(Body[col - 24] == ' ') Body[col - 24] = '\0';
       	}
       	else if(row == 20 && col > 25 && col <= 95) {
       	  xt_par2(XT_SET_ROW_COL_POS,row,--col);
       	  putchar(' ');
       	  Body[col + 45] = ' ';
-          if(Body[col + 46] == ' ') Body[col + 46] = '\0';
       	}
       	else if(row == 20){                                          
       	  xt_par2(XT_SET_ROW_COL_POS,--row,col=94);
@@ -999,7 +960,7 @@ int main() {
 	      xt_par2(XT_SET_ROW_COL_POS,row,col);
       }
       else if (c == KEY_DELETE) {
-        if(row == 14 && col >= 25 && col < 43) {
+        if(row == 14 && col >= 25 && col < 39) {
       	  putchar(' ');
       	  Category[col - 25] = ' ';
 	    }
@@ -1018,7 +979,7 @@ int main() {
       xt_par2(XT_SET_ROW_COL_POS,row,col);
       } 
       else if((c >= ' ' && c <= '~') && col >= 25 && col < 95) {
-      	if(row == 14 && col >= 25 && col < 43) {
+      	if(row == 14 && col >= 25 && col < 39) {
       	  putchar(c);
       	  Category[col - 25] = c;
       	}
@@ -1034,7 +995,7 @@ int main() {
       	  putchar(c);
       	  Body[col + 45] = c;
       	}
-      	if (col < 94 && !(row == 16 && col > 53) && !(row == 14 && col > 42)){
+      	if (col < 94 && !(row == 16 && col > 53) && !(row == 14 && col > 38)){
       	  ++col; 
       	}    
       	else{ 
