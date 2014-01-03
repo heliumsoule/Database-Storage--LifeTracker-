@@ -10,7 +10,7 @@ int i, j;                            //counters.
 int screen = 0;                     //screen toggler, 0, 1, or 2 to determine which screen to be on (main, add, or edit)      
 int CATEGORY = 8;                  //CATEGORY determines which category the user is on.
 char input[1000];                 //input is the char array that takes the array of strings from myStore.
-char Category[14];                   //Category, Title and Body on screen = 0, take the input from Search and sends them to catStorage,
+char Category[16];                   //Category, Title and Body on screen = 0, take the input from Search and sends them to catStorage,
 char Title[29];                     //a temporary array that houses the records with the matching parameters. In screen = 1, C, T, and B 
 char Body[141];                    //function as parameters for the record to be added, and on screen = 2, to be edited.
 int recordView = 0;               //displays which record the user is on. Subtract one from the record number to determine recordView.
@@ -321,10 +321,10 @@ void fillCategory(){
 //by putting a null byte at the last occurence of a character.
 void removeBlanks() {
   int end;
-  for(i = 13; i >= 0; i--){
+  for(i = 15; i >= 0; i--){
     if(Category[i] > ' ' && Category[i] <= '~'){
       end = i+1;
-      if (end < 14) Category[end] = '\0';
+      if (end < 16) Category[end] = '\0';
       break;
     }
   }
@@ -838,11 +838,11 @@ int main() {
         	if(col < 95) {
             xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
             int reset = 0;
-            for(reset; reset < 18; reset++) Title[reset] = ' ';
+            for(reset; reset < 29; reset++) Title[reset] = ' ';
             reset = 0;
             for(reset; reset < 140; reset++) Body[reset] = ' ';
             reset = 0;
-            for(reset; reset < 29; reset++) Category[reset] = ' ';
+            for(reset; reset < 15; reset++) Category[reset] = ' ';
           }
         	else if(Title[0] == ' ' && Body[0] == ' ' && Category[0] == ' ') {
             xt_par2(XT_SET_ROW_COL_POS,row = CATEGORY,col = 2);
@@ -859,11 +859,11 @@ int main() {
     }
     if (screen == 1 || screen == 2){
       int reset = 0;
-      for(reset; reset < 18; reset++) Title[reset] = ' ';
+      for(reset; reset < 29; reset++) Title[reset] = ' ';
       reset = 0;
       for(reset; reset < 140; reset++) Body[reset] = ' ';
       reset = 0;
-      for(reset; reset < 29; reset++) Category[reset] = ' ';
+      for(reset; reset < 15; reset++) Category[reset] = ' ';
       addScreen();
       if (screen == 2){ 
         char TempBodyA[71]; 
@@ -926,13 +926,13 @@ int main() {
       }
       else if(c == KEY_LEFT && col > 25 && col < 95) xt_par2(XT_SET_ROW_COL_POS,row,--col);
       else if(c == KEY_LEFT && col == 25 && row == 20) xt_par2(XT_SET_ROW_COL_POS,--row,col=94);
-      else if(c == KEY_RIGHT && col > 24 && col < 39 && row == 14) xt_par2(XT_SET_ROW_COL_POS,row,++col);
+      else if(c == KEY_RIGHT && col > 24 && col < 38 && row == 14) xt_par2(XT_SET_ROW_COL_POS,row,++col);
       else if(c == KEY_RIGHT && col > 24 && col < 54 && row == 16) xt_par2(XT_SET_ROW_COL_POS,row,++col);
       else if(c == KEY_RIGHT && col > 24 && col < 94 && row > 18) xt_par2(XT_SET_ROW_COL_POS,row,++col);
       else if(c == KEY_RIGHT && col == 94 && row == 19) xt_par2(XT_SET_ROW_COL_POS,++row,col=25);   
       else if (c == KEY_ENTER && row > 18 && row < 20) xt_par2(XT_SET_ROW_COL_POS,++row,col=25);      
       else if (c == KEY_BACKSPACE && col >= 25 && col < 95 && ((row > 18 && row < 21) || row == 16 || row == 14)){
-      	if(row == 14 && col > 25 && col <= 39) {
+      	if(row == 14 && col > 25 && col <= 38) {
       	  xt_par2(XT_SET_ROW_COL_POS,row,--col);
       	  putchar(' ');
       	  Category[col - 25] = ' ';
@@ -960,7 +960,7 @@ int main() {
 	      xt_par2(XT_SET_ROW_COL_POS,row,col);
       }
       else if (c == KEY_DELETE) {
-        if(row == 14 && col >= 25 && col < 39) {
+        if(row == 14 && col >= 25 && col < 38) {
       	  putchar(' ');
       	  Category[col - 25] = ' ';
 	    }
@@ -979,7 +979,7 @@ int main() {
       xt_par2(XT_SET_ROW_COL_POS,row,col);
       } 
       else if((c >= ' ' && c <= '~') && col >= 25 && col < 95) {
-      	if(row == 14 && col >= 25 && col < 39) {
+      	if(row == 14 && col >= 25 && col < 38) {
       	  putchar(c);
       	  Category[col - 25] = c;
       	}
@@ -995,9 +995,9 @@ int main() {
       	  putchar(c);
       	  Body[col + 45] = c;
       	}
-      	if (col < 94 && !(row == 16 && col > 53) && !(row == 14 && col > 38)){
+      	if (col < 94 && !(row == 16 && col > 53) && !(row == 14 && col > 37)){
       	  ++col; 
-      	}    
+      	}
       	else{ 
       	  if (row == 19)                                            
       	    xt_par2(XT_SET_ROW_COL_POS,++row,col=25);
@@ -1009,11 +1009,11 @@ int main() {
 	      removeBlanks();
         readmyStoreFromChild("add", Title, Body, Category, NULL);
         int k = 0;
-        while(k != 18) Title[k++] = ' ';
+        while(k != 29) Title[k++] = ' ';
         k = 0;
         while(k != 140) Body[k++] = ' ';
         k = 0;
-        while(k != 29) Category[k++] = ' ';
+        while(k != 15) Category[k++] = ' ';
 	      maxRecord++;
         screen = 0;
       }
@@ -1032,21 +1032,21 @@ int main() {
     	}
       readmyStoreFromChild("edit", str, Title, Body, Category);
       int k = 0;
-      while(k != 18) Title[k++] = ' ';
+      while(k != 29) Title[k++] = ' ';
       k = 0;
       while(k != 140) Body[k++] = ' ';
       k = 0;
-      while(k != 29) Category[k++] = ' ';
+      while(k != 15) Category[k++] = ' ';
       screen = 0;
     }
   }
     if (screen == 4){
       int reset = 0;
-      for(reset; reset < 18; reset++) Title[reset] = ' ';
+      for(reset; reset < 29; reset++) Title[reset] = ' ';
       reset = 0;
       for(reset; reset < 140; reset++) Body[reset] = ' ';
       reset = 0;
-      for(reset; reset < 29; reset++) Category[reset] = ' ';
+      for(reset; reset < 15; reset++) Category[reset] = ' ';
       deleteScreen();
       if (screen == 4){ 
         char TempBodyA[71]; 
