@@ -15,6 +15,8 @@ To run LifeTracker, in the terminal, type
     gcc myuiscreen.c -o myuiscreen
     ./myuiscreen
 
+    WHY WONT MY CHANGES SAVE
+
 Note that mystore has been updated from Mr. Brooks' previous version. The only function that 
 is different is the add function which now takes three arguments in the form: 
 
