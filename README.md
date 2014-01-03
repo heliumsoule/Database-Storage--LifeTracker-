@@ -15,15 +15,13 @@ To run LifeTracker, in the terminal, type
     gcc myuiscreen.c -o myuiscreen
     ./myuiscreen
 
-    WHY WONT MY CHANGES SAVE
-
 Note that mystore has been updated from Mr. Brooks' previous version. The only function that 
 is different is the add function which now takes three arguments in the form: 
 
     ./mystore add SUBJECT BODY CATEGORY
 
 Important functions to know include: 
-    F2 - To Add a record, hit F2. The user is then taken to another addScreen where the parameters for a new record can be inputted.
+    F2 - To Add a record, hit F2. The user is then taken to another addScreen where the parameters for a new record can be inputted. <br>
     A category is created through this way.
     F3 - To Delete a record, place the cursor over that record and hit F3 which takes the user to another delete screen
     to ascertain that the user really wants to delete the record. From there, the user can press F3 again, which deletes the record.
