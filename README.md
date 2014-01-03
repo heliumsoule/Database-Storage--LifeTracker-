@@ -3,6 +3,7 @@ Jing Lin and Matthew Laikhram
 ==============================
 
 LifeTracker is an easy way to store important information and keep it organized. Features in LifeTracker include: 
+
     1. Adding, Deleting, and Editing records in LifeTracker.
     2. Adding and Deleting Categories
     3. Searching for records in the SearchBox. 
