@@ -10,7 +10,8 @@ LifeTracker is an easy way to store important information and keep it organized.
     records section with the left/right arrow keys.
     5. Sort the records chronologically or alphabetically.
 
-To run LifeTracker, in the terminal, type
+To run LifeTracker, in the terminal, type: 
+
     gcc mystore.c -o mystore
     gcc myuiscreen.c -o myuiscreen
     ./myuiscreen
