@@ -4,12 +4,12 @@ Jing Lin and Matthew Laikhram
 
 LifeTracker is an easy way to store important information and keep it organized. Features in LifeTracker include: 
 
-    1. Adding, Deleting, and Editing records in LifeTracker.
-    2. Adding and Deleting Categories
-    3. Searching for records in the SearchBox. 
-    4. Scroll through the records of every category with the up/down arrow keys and alternate between the categories and 
-    records section with the left/right arrow keys.
-    5. Sort the records chronologically or alphabetically.
+1. Adding, Deleting, and Editing records in LifeTracker.
+2. Adding and Deleting Categories
+3. Searching for records in the SearchBox. 
+4. Scroll through the records of every category with the up/down arrow keys and alternate between the categories and 
+records section with the left/right arrow keys.
+5. Sort the records chronologically or alphabetically.
 
 To run LifeTracker, in the terminal, type: 
 
