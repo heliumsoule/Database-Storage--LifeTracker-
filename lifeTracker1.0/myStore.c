@@ -1,4 +1,4 @@
-// mystore:  manages a linked-list database (called "mystore.dat") of little items
+// myStore:  manages a linked-list database (called "myStore.dat") of little items
 
 /* Implements commands:
     add
@@ -15,11 +15,11 @@
 #include <string.h>
 #include <time.h>
 
-char *Usage = "Usage:\tmystore add \"subject\" \"body\"\n\
-    mystore stat\n\
-    mystore display {item-no}\n\
-    mystore delete {item-no}\n\
-    mystore edit {item-no} \"subject\" \"body\"\n";
+char *Usage = "Usage:\tmyStore add \"subject\" \"body\"\n\
+    myStore stat\n\
+    myStore display {item-no}\n\
+    myStore delete {item-no}\n\
+    myStore edit {item-no} \"subject\" \"body\"\n";
 
 #define NOTHING     0
 #define ADD         1
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
         if (errmsg[0] != '\0')
             printf("|status: ERROR: %s|\n", errmsg);
         else
-            printf("|status: ERROR: Error reading mystore.dat\n\n%s|\n", Usage);
+            printf("|status: ERROR: Error reading myStore.dat\n\n%s|\n", Usage);
         return 1;
     }
     
@@ -224,7 +224,7 @@ int readData(void) {
     struct carrier *current_carrier;
     struct carrier *previous_carrier;
     
-    FILE *fp = fopen("mystore.dat", "rb");  // read in binary file mode
+    FILE *fp = fopen("myStore.dat", "rb");  // read in binary file mode
     if (!fp)
         return TRUE;    // no such file, that's OK: we're doing this for the first time
     
@@ -327,9 +327,9 @@ int writeData(void) {
     struct carrier *ptr;
     struct data this_data;
     
-    FILE *fp = fopen("mystore.dat", "wb");  // writing in binary
+    FILE *fp = fopen("myStore.dat", "wb");  // writing in binary
     if (!fp) {
-        sprintf(errmsg, "Cannot open mystore.dat for writing.");
+        sprintf(errmsg, "Cannot open myStore.dat for writing.");
         return FALSE;
     }
         

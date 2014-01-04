@@ -209,8 +209,8 @@ void setup() {                    //print using myui (stat)
   xt_par2(XT_SET_ROW_COL_POS, row = 2, col = 25);
   printf("Number of Records: %s | Authors: %s | Version: %s ", data[3].value, data[2].value, data[1].value);
   xt_par2(XT_SET_ROW_COL_POS,row = 3, col = 24);
-  if(maxRecord != 0) printf("First Record  Time: %s | Last Record  Time: %s", data[4].value, data[5].value);
-  else printf("First Record Time: (null) | Last Record Time: (null)" );
+  if (maxRecord != 0) printf("First Record  Time: %s | Last Record  Time: %s", data[4].value, data[5].value);
+  else printf("             First Record Time: (NULL) | Last Record Time: (NULL)");
   xt_par2(XT_SET_ROW_COL_POS, row = 4, col = 1);
   printf("------------------------------------------------------------------------------------------------------------------------");
   xt_par2(XT_SET_ROW_COL_POS, row = 5, col = 1);
@@ -352,7 +352,7 @@ void removeBlanks() {
     if(Body[i] == '\0') Body[i] = ' ';
   }
 }
-  
+
 //The function to loop through dataStorage to determine the records that match 
 //the input parameters for T, B, and C in Search.
 void searchResults(int range){
@@ -618,13 +618,14 @@ int main() {
       currentRecord = 0;
       recordView = 0;
       xt_par0(XT_CLEAR_SCREEN);
+      //if(maxRecord != 0) updateRecords(0);
       lifeTracker();
-      updateRecords(0);
+      xt_par2(XT_SET_ROW_COL_POS,row = 8, col = 2);
     }
     while(screen == 0) {
       while((c = getkey()) == KEY_NOTHING);
         if(c == KEY_F9) screen = 3;
-        else if(c == KEY_F3 && maxRecord > 0) screen = 4;
+        else if(c == KEY_F3 && maxRecord > 0 && col == 20) screen = 4;
         else if(c == KEY_DOWN) {
           if(col == 2 && row >= 8 && row < catCounter + 7){ 
             xt_par2(XT_SET_ROW_COL_POS,CATEGORY = ++row,col);
@@ -730,31 +731,36 @@ int main() {
           else if(row == 13) Title[col - 88] = ' ';
           else if(row >= 16 && row < 22) Body[(row - 16) * 25 + col - 95] = ' ';
         }
-        else if(c == KEY_BACKSPACE && col > 94) {
+        else if(c == KEY_BACKSPACE && col >= 95) {
           if((row == 9 || row == 12) && col > 95) {
+	          xt_par2(XT_SET_ROW_COL_POS,row,--col);
             putchar(' ');
             Category[col - 95] = ' ';
-            xt_par2(XT_SET_ROW_COL_POS,row,--col);
+            xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
           else if((row == 9 || row == 12) && col == 95) {
+	    //xt_par2(XT_SET_ROW_COL_POS,row,col);
             putchar(' ');
             Title[col - 95] = ' ';
             xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
           else if(row == 13 && col > 95) {
+	          xt_par2(XT_SET_ROW_COL_POS,row,--col);
             putchar(' ');
             Title[col - 88] = ' ';
-            xt_par2(XT_SET_ROW_COL_POS,row,--col);
+            xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
           else if(row == 13 && col == 95) {
+	          xt_par2(XT_SET_ROW_COL_POS,--row,col = 101);
             putchar(' ');
             Title[col - 88] = ' ';
-            xt_par2(XT_SET_ROW_COL_POS,--row,col = 101);
+            xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
           else if(row >= 16 && row < 22 && col > 95) {
+	          xt_par2(XT_SET_ROW_COL_POS,row,--col);
             putchar(' ');
             Body[(row - 16) * 25 + col - 95] = ' ';
-            xt_par2(XT_SET_ROW_COL_POS,row,--col);
+            xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
           else if(row == 16 && col == 95) {
             putchar(' ');
@@ -762,9 +768,10 @@ int main() {
             xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
           else if(row > 16 && row < 22 && col == 95) {
+	          xt_par2(XT_SET_ROW_COL_POS,--row,col = 119);
             putchar(' ');
             Body[(row - 16) * 25 + col - 95] = ' ';
-            xt_par2(XT_SET_ROW_COL_POS,--row,col = 119);
+            xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
         } 
         else if((c >= ' ' && c <= '~') && col >= 95 && col < 120){
@@ -822,7 +829,7 @@ int main() {
         }
         else if(c == KEY_F2)
           screen = 1;
-        else if(c == KEY_F4 && col == 20)
+        else if(c == KEY_F4 && col == 20 && maxRecord != 0)
           screen = 2;
         else if(c == KEY_F6) {
         	if(sort == 0){
@@ -838,11 +845,11 @@ int main() {
         	if(col < 95) {
             xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
             int reset = 0;
-            for(reset; reset < 29; reset++) Title[reset] = ' ';
+            for(reset; reset < 18; reset++) Title[reset] = ' ';
             reset = 0;
             for(reset; reset < 140; reset++) Body[reset] = ' ';
             reset = 0;
-            for(reset; reset < 15; reset++) Category[reset] = ' ';
+            for(reset; reset < 29; reset++) Category[reset] = ' ';
           }
         	else if(Title[0] == ' ' && Body[0] == ' ' && Category[0] == ' ') {
             xt_par2(XT_SET_ROW_COL_POS,row = CATEGORY,col = 2);
@@ -859,11 +866,11 @@ int main() {
     }
     if (screen == 1 || screen == 2){
       int reset = 0;
-      for(reset; reset < 29; reset++) Title[reset] = ' ';
+      for(reset; reset < 16; reset++) Title[reset] = ' ';
       reset = 0;
       for(reset; reset < 140; reset++) Body[reset] = ' ';
       reset = 0;
-      for(reset; reset < 15; reset++) Category[reset] = ' ';
+      for(reset; reset < 29; reset++) Category[reset] = ' ';
       addScreen();
       if (screen == 2){ 
         char TempBodyA[71]; 
@@ -926,13 +933,13 @@ int main() {
       }
       else if(c == KEY_LEFT && col > 25 && col < 95) xt_par2(XT_SET_ROW_COL_POS,row,--col);
       else if(c == KEY_LEFT && col == 25 && row == 20) xt_par2(XT_SET_ROW_COL_POS,--row,col=94);
-      else if(c == KEY_RIGHT && col > 24 && col < 38 && row == 14) xt_par2(XT_SET_ROW_COL_POS,row,++col);
-      else if(c == KEY_RIGHT && col > 24 && col < 54 && row == 16) xt_par2(XT_SET_ROW_COL_POS,row,++col);
+      else if(c == KEY_RIGHT && col > 24 && col < 37 && row == 14) xt_par2(XT_SET_ROW_COL_POS,row,++col);
+      else if(c == KEY_RIGHT && col > 24 && col < 53 && row == 16) xt_par2(XT_SET_ROW_COL_POS,row,++col);
       else if(c == KEY_RIGHT && col > 24 && col < 94 && row > 18) xt_par2(XT_SET_ROW_COL_POS,row,++col);
       else if(c == KEY_RIGHT && col == 94 && row == 19) xt_par2(XT_SET_ROW_COL_POS,++row,col=25);   
       else if (c == KEY_ENTER && row > 18 && row < 20) xt_par2(XT_SET_ROW_COL_POS,++row,col=25);      
       else if (c == KEY_BACKSPACE && col >= 25 && col < 95 && ((row > 18 && row < 21) || row == 16 || row == 14)){
-      	if(row == 14 && col > 25 && col <= 38) {
+      	if(row == 14 && col > 25 && col < 39) {
       	  xt_par2(XT_SET_ROW_COL_POS,row,--col);
       	  putchar(' ');
       	  Category[col - 25] = ' ';
@@ -979,7 +986,7 @@ int main() {
       xt_par2(XT_SET_ROW_COL_POS,row,col);
       } 
       else if((c >= ' ' && c <= '~') && col >= 25 && col < 95) {
-      	if(row == 14 && col >= 25 && col < 38) {
+      	if(row == 14 && col >= 25 && col < 40) {
       	  putchar(c);
       	  Category[col - 25] = c;
       	}
@@ -995,9 +1002,9 @@ int main() {
       	  putchar(c);
       	  Body[col + 45] = c;
       	}
-      	if (col < 94 && !(row == 16 && col > 53) && !(row == 14 && col > 37)){
+      	if (col < 94 && !(row == 16 && col > 52) && !(row == 14 && col > 36)){
       	  ++col; 
-      	}
+      	}    
       	else{ 
       	  if (row == 19)                                            
       	    xt_par2(XT_SET_ROW_COL_POS,++row,col=25);
@@ -1005,7 +1012,7 @@ int main() {
       	}
       }
       else if(c == KEY_F2 && screen == 1 /* && there is a valid title and description */){
-	    //save record to corresponding subject
+	//save record to corresponding subject
 	      removeBlanks();
         readmyStoreFromChild("add", Title, Body, Category, NULL);
         int k = 0;
