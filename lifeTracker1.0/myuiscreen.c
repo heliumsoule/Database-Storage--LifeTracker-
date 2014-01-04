@@ -320,7 +320,7 @@ void fillCategory(){
 //removeBlanks() removes the ' ' characters in the arrays, Title, Body and Category
 //by putting a null byte at the last occurence of a character.
 void removeBlanks() {
-  int end;
+  int end = 0;
   for(i = 15; i >= 0; i--){
     if(Category[i] > ' ' && Category[i] <= '~'){
       end = i+1;
@@ -331,6 +331,8 @@ void removeBlanks() {
   for(i = 0; i < end; i++){
     if(Category[i] == '\0') Category[i] = ' ';
   }
+  if(end == 0) Category[0] = '\0';
+  end = 0;
   for(i = 28; i >= 0; i--){
     if(Title[i] > ' ' && Title[i] <= '~'){
       end = i+1;
@@ -341,6 +343,8 @@ void removeBlanks() {
   for(i = 0; i < end; i++){
     if(Title[i] == '\0') Title[i] = ' ';
   }
+  if(end == 0) Title[0] = '\0';
+  end = 0;
   for(i = 139; i >= 0; i--){
     if(Body[i] > ' ' && Body[i] <= '~'){
       end = i+1;
@@ -351,6 +355,7 @@ void removeBlanks() {
   for(i = 0; i < end; i++){
     if(Body[i] == '\0') Body[i] = ' ';
   }
+  if(end == 0) Body[0] = '\0';
 }
 
 //The function to loop through dataStorage to determine the records that match 
@@ -733,7 +738,7 @@ int main() {
         }
         else if(c == KEY_BACKSPACE && col >= 95) {
           if((row == 9 || row == 12) && col > 95) {
-	          xt_par2(XT_SET_ROW_COL_POS,row,--col);
+	    xt_par2(XT_SET_ROW_COL_POS,row,--col);
             putchar(' ');
             Category[col - 95] = ' ';
             xt_par2(XT_SET_ROW_COL_POS,row,col);
@@ -845,11 +850,11 @@ int main() {
         	if(col < 95) {
             xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
             int reset = 0;
-            for(reset; reset < 18; reset++) Title[reset] = ' ';
+            for(reset; reset < 29; reset++) Title[reset] = ' ';
             reset = 0;
             for(reset; reset < 140; reset++) Body[reset] = ' ';
             reset = 0;
-            for(reset; reset < 29; reset++) Category[reset] = ' ';
+            for(reset; reset < 16; reset++) Category[reset] = ' ';
           }
         	else if(Title[0] == ' ' && Body[0] == ' ' && Category[0] == ' ') {
             xt_par2(XT_SET_ROW_COL_POS,row = CATEGORY,col = 2);
@@ -858,19 +863,21 @@ int main() {
           }
           else if(Title[0] != ' ' || Body[0] != ' ' || Category[0] != ' ') {
             clearSearch();
+	    //updateRecords(0);
+	    search = 1;
             searchResults(0);
-            search = 1;
+            //search = 1;
             xt_par2(XT_SET_ROW_COL_POS,row = 7, col = 20);
           }
         }
     }
     if (screen == 1 || screen == 2){
       int reset = 0;
-      for(reset; reset < 16; reset++) Title[reset] = ' ';
+      for(reset; reset < 29; reset++) Title[reset] = ' ';
       reset = 0;
       for(reset; reset < 140; reset++) Body[reset] = ' ';
       reset = 0;
-      for(reset; reset < 29; reset++) Category[reset] = ' ';
+      for(reset; reset < 16; reset++) Category[reset] = ' ';
       addScreen();
       if (screen == 2){ 
         char TempBodyA[71]; 
@@ -1013,15 +1020,17 @@ int main() {
       }
       else if(c == KEY_F2 && screen == 1 /* && there is a valid title and description */){
 	//save record to corresponding subject
-	      removeBlanks();
-        readmyStoreFromChild("add", Title, Body, Category, NULL);
+        if(Title[0] != ' ' || Body[0] != ' ' || Category[0] != ' ') {
+          removeBlanks();
+          readmyStoreFromChild("add", Title, Body, Category, NULL);
+        }
         int k = 0;
         while(k != 29) Title[k++] = ' ';
         k = 0;
         while(k != 140) Body[k++] = ' ';
         k = 0;
         while(k != 15) Category[k++] = ' ';
-	      maxRecord++;
+        maxRecord++;
         screen = 0;
       }
       else if(c == KEY_F2 && screen == 2 /* && there has been a valid change in the record */){
@@ -1053,7 +1062,7 @@ int main() {
       reset = 0;
       for(reset; reset < 140; reset++) Body[reset] = ' ';
       reset = 0;
-      for(reset; reset < 15; reset++) Category[reset] = ' ';
+      for(reset; reset < 16; reset++) Category[reset] = ' ';
       deleteScreen();
       if (screen == 4){ 
         char TempBodyA[71]; 
