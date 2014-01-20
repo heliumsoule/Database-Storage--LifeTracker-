@@ -14,6 +14,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <signal.h>
 
 char *Usage = "Usage:\tmyStore add \"subject\" \"body\"\n\
     myStore stat\n\
@@ -48,7 +52,7 @@ int edit(char *sn);
 int writeData(void);
 int display(char *sn);
 int delete(char *sn);
-void stat(void);
+void statis(void);
 char *rstrip(char *s);
 void list(void);
 char *Capital(char *s);
@@ -85,7 +89,7 @@ char *fifo_read = "/tmp/fifo_server.dat";
 int main(int argc, char *argv[]) {
     int read_Length;
     char input[200];
-        
+            
     if (signal(SIGINT, the_handler) == SIG_ERR) {
         perror("Cannot set up signal handler on SIGINT...");
         return -1;
@@ -111,7 +115,7 @@ int main(int argc, char *argv[]) {
     while(1) {
         read_Length = read(fd_read, input, 200);
         if(read_Length > 0) {
-            input[read_Lenght] = '\0';
+            input[read_Length] = '\0';
             if (Process(input) == -1) {
                 printf("fifo_server quitting...\n");
                 close(fd_read);
@@ -121,7 +125,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    }
     if (!parseArgs(argc, argv)) {
         if (errmsg[0] != '\0')
             printf("%s\n",errmsg);
@@ -148,7 +151,7 @@ int main(int argc, char *argv[]) {
     }
     
     if (command == STAT) {
-        stat();
+        statis();
     }
     
     if (command == DISPLAY && !display(argv[2])) {
@@ -472,7 +475,7 @@ int writeData(void) {
 }
 
 // ------------------------------------- stat ------------------------------
-void stat(void) {
+void statis(void) {
     struct tm *tp;
 
     printf("|status: OK|\n");

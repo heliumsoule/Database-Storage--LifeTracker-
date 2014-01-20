@@ -107,7 +107,7 @@ int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4, cha
   return n_input;
 }
 
-int readMyStoreFromChildUPDATED(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5) {
+int readmyStoreFromChildUPDATED(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5) {
     char *fifo_write = "/tmp/fifo_server.dat";
     char fifo_read[40];
     char send_message[200];
@@ -202,7 +202,7 @@ int parseInputForRecords(int counter) {
   for(i = 0; i < counter; i++) {
     char str[80];
     sprintf(str, "%d", i+1);
-    readmyStoreFromChild("display", str, NULL, NULL, NULL);
+    readmyStoreFromChildUPDATED("display", str, NULL, NULL, NULL);
     recordsHelper();
     char *ARGA = record[2].value;
     char *ARGB = record[3].value;
@@ -224,7 +224,7 @@ int parseInputForRecords(int counter) {
 
 //Determines the maxRecord, and uses that to setup the master array, dataStorage.
 int setStat(){
-  readmyStoreFromChild("stat", NULL, NULL, NULL, NULL); 
+  readmyStoreFromChildUPDATED("stat", NULL, NULL, NULL, NULL); 
   parseInputForStat();
   parseInputForRecords(maxRecord); 
   return 0;
@@ -1048,7 +1048,7 @@ int main() {
 	//save record to corresponding subject
         if(Title[0] != ' ' || Body[0] != ' ' || Category[0] != ' ') {
           removeBlanks();
-          readmyStoreFromChild("add", Title, Body, Category, NULL);
+          readmyStoreFromChildUPDATED("add", Title, Body, Category, NULL);
         }
         int k = 0;
         while(k != 29) Title[k++] = ' ';
@@ -1072,7 +1072,7 @@ int main() {
     	    break;
     	  }
     	}
-      readmyStoreFromChild("edit", str, Title, Body, Category);
+      readmyStoreFromChildUPDATED("edit", str, Title, Body, Category);
       int k = 0;
       while(k != 29) Title[k++] = ' ';
       k = 0;
@@ -1142,7 +1142,7 @@ int main() {
         	  break;
         	}
         }
-        readmyStoreFromChild("delete", str, NULL, NULL, NULL);
+        readmyStoreFromChildUPDATED("delete", str, NULL, NULL, NULL);
         maxRecord--;
         screen = 0;
       }
