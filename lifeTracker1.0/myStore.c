@@ -44,16 +44,25 @@ int parseArgs(int argc, char *argv[]);
 int isPositive(char *s);
 int readData(void);
 int add(char *subject, char *body, char *category);
+int edit(char *sn);
+int writeData(void);
+int display(char *sn);
+int delete(char *sn);
 void stat(void);
 char *rstrip(char *s);
 void list(void);
+char *Capital(char *s);
+int Process(char *s);
+char *SkipWhitespace(char *s, int Whitespace);
+int SeparateIntoFields(char *s, char **fields, int max_fields);
+static void the_handler(int sig);
 
 // this describes the data item on disk
 struct data {
     time_t theTime;
     char theSubject[31];
-    char theCategory[14];
-    char theBody[140];
+    char theCategory[16];
+    char theBody[141];
 };
 
 // this describes the data item in memory (data with a link to the next carrier)
@@ -70,8 +79,49 @@ struct carrier *last = NULL;
 int rewrite = FALSE;        // if data changes then rewrite
 char errmsg[100] = "";
 
+int fd_read, fd_write;
+char *fifo_read = "/tmp/fifo_server.dat";
 // ---------------------------------- main() --------------------------------
 int main(int argc, char *argv[]) {
+    int read_Length;
+    char input[200];
+        
+    if (signal(SIGINT, the_handler) == SIG_ERR) {
+        perror("Cannot set up signal handler on SIGINT...");
+        return -1;
+    }
+    if (signal(SIGUSR1, the_handler) == SIG_ERR) {
+        perror("Cannot set up signal handler on SIGUSR1...");
+        return -1;
+    }
+    unlink(fifo_read);
+    if (mkfifo(fifo_read,0666) != 0) {
+        perror("mkfifo error: ");
+        return -1;
+    }
+    fd_read = open(fifo_read, O_RDONLY);
+    if (fd_read < 0) {
+        printf("open(fifo_read) failed, returns: %d\n", fd_read);
+        return fd_read;
+    }
+    if ((fd_write = open(fifo_read, O_WRONLY)) < 0) {
+        perror("Cannot open fifo_read for writing. ");
+        return fd_write;
+    }
+    while(1) {
+        read_Length = read(fd_read, input, 200);
+        if(read_Length > 0) {
+            input[read_Lenght] = '\0';
+            if (Process(input) == -1) {
+                printf("fifo_server quitting...\n");
+                close(fd_read);
+                unlink(fifo_read);
+                return 0;
+            }
+        }
+    }
+
+    }
     if (!parseArgs(argc, argv)) {
         if (errmsg[0] != '\0')
             printf("%s\n",errmsg);
@@ -138,6 +188,72 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+static void the_handler(int sig) {
+    printf("Signal caught: fifo_server terminated by signal %d\n",sig);
+    close(fd_read);
+    close(fd_write);
+    unlink(fifo_read);
+    exit(0);
+}
+
+// ========================= Capital =======================
+char *Capital(char *s) {
+    char *s2 = s;
+    char c;
+    while ((c = *s2) != 0) {
+        if (c >= 'a' && c <= 'z')
+            *s2 = c - 'a' + 'A';
+        ++s2;
+    }
+    return s;
+}
+
+// ================================ Process ===========================
+int Process(char *s) {
+    char *fields[5];
+    int nfields, fd_write;
+    
+    nfields = SeparateIntoFields(s, fields, 5);
+    // do the commands:
+    if (strcmp(fields[0],"quit") == 0) return -1;
+    if (strcmp(fields[0],"print") == 0 && nfields > 1) {
+        if (nfields == 2)
+            printf("%s\n",Capital(fields[1]));
+        else
+            printf("%s %s\n",Capital(fields[1]),Capital(fields[2]));
+    }
+    else if (strcmp(fields[0],"return") == 0 && nfields == 3) {
+        if ((fd_write = open(fields[1],O_WRONLY)) < 0)
+            printf("Cannot write to %s\n", fields[1]);
+        else {
+            write(fd_write,Capital(fields[2]),strlen(fields[2]));
+            close(fd_write);
+        }
+    }
+    else
+        printf("Unrecognized command: %s %s %s\n", fields[0],fields[1],fields[2]);
+    return 0;
+}
+
+// ================================ SeparateIntoFields ===================================
+int SeparateIntoFields(char *s, char **fields, int max_fields) {
+    int i;
+    static char null_c = '\0';
+    
+    for (i = 0; i < max_fields; ++i) fields[i] = &null_c;
+    
+    for (i = 0; i < max_fields; ++i) {
+        while (*s && (*s == ' ' || *s == '\t' || *s == '\n')) ++s;  // skip whitespace
+        if (!*s) return i;
+        fields[i] = s;
+        if (i == max_fields - 1) return i+1;
+        while (*s && *s != ' ' && *s != '\t' && *s != '\n') ++s;    // skip non-whitespace
+        if (!*s) return i+1;
+        *s++ = '\0';
+    }
+    return -1;
+}
+
 // ------------------------------- parseArgs() -------------------------------
 // parse the command-line arguments, and assign the global variables from them
 // return FALSE if any problem with the command-line arguments
@@ -186,7 +302,8 @@ int parseArgs(int argc, char *argv[]) {
             return FALSE;
         }
     }
-    // try the three-argument command: edit
+    // try the three-argument command: edit 
+    
     else if (argc == 6) {
         if (strcmp(argv[1], "edit") == 0 && isPositive(argv[2])) {
             command = EDIT;
@@ -194,14 +311,14 @@ int parseArgs(int argc, char *argv[]) {
             subject = argv[3];
             body = argv[4];
             category = argv[5];
-            strcpy(category, argv[5]);
+            //strcpy(category, argv[5]); 
             return TRUE;
-        }
+        } 
         else {
             sprintf(errmsg, "Unrecognized 4-argument call: %s %s %s %s",argv[1],argv[2],argv[3],argv[4]);
             return FALSE;
-        }
-    }
+        } 
+    } 
     else
         return FALSE;
 }
@@ -291,8 +408,8 @@ int add(char *subject, char *body, char *category) {
     return TRUE;
 }
 
-// ------------------------------------- edit ------------------------------------
-int edit(char *sn) {
+// ------------------------------------- edit ------------------------------------ 
+int edit(char *sn) { 
     int n = atoi(sn);
     int i;
     struct carrier *ptr;
@@ -320,7 +437,8 @@ int edit(char *sn) {
     printf("|status: OK|\n");
     return TRUE;
 }
-    
+
+
 // ----------------------------------- writeData ---------------------------------
 int writeData(void) {
     int i;

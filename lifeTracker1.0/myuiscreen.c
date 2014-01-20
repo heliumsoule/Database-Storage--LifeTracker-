@@ -1,9 +1,14 @@
+#include <fcntl.h>
+#include "keyboard.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "xterm_control.h"
-#include "keyboard.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h> 
+#include <unistd.h>
+#include "xterm_control.h"
+
 //TESTING TESTING
 int row, col;                         //120 x 28                                
 int i, j;                            //counters.
@@ -39,6 +44,92 @@ int tempCounter;                  //Current number of records in the current cat
 int sort = 0;                    //Toggle switch for sorting. 0 is chronologically, 1 is alphabetically.
 int search = 0;                 //Toggle switch for searching. 1 is ON, 0 is OFF. If on, then search will scroll through the special "category" of search items
 int total;                     //The total number of name value pairs.
+int reset = 0;                //Universal reset counter
+
+//Function to pipe from myStore, a TEXT database and myuiscreen.
+//Modifications include considering more arguments, and changing execvp.
+int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5) {
+  int pid, mypipe[2];
+  char *newargv[7];
+  char *errmsg;
+  int n_input = 0;
+  // turn off special keyboard handling
+  //getkey_terminate();
+  
+  // create the pipe
+  if(pipe(mypipe) == -1) {
+    strcpy(errmsg,"Problem in creating the pipe");
+    return 0;
+  }
+  
+  pid = fork();
+  
+  if(pid == -1) {
+    strcpy(errmsg, "Error in forking");
+    return 0;
+  }
+  if(pid == 0) {  // child
+    close(mypipe[0]);  // Don't need to read from the pipe
+    dup2(mypipe[1],STDOUT_FILENO);  // connect the "write-end" of the pipe to child's STDOUT
+    
+    newargv[0] = "./myStore";
+    newargv[1] = argv1;
+    newargv[2] = argv2;
+    newargv[3] = argv3;
+    newargv[4] = argv4;
+    newargv[5] = argv5;
+    newargv[6] = NULL;
+    execvp(newargv[0],newargv);
+
+    exit(0);
+  }
+  else if(pid > 0) {
+    char *s = input;
+    int c;
+    close(mypipe[1]);  // Don't need to write to the pipe
+    // read the data into the input array from mypipe[0]
+    FILE *fpin;
+    if((fpin = fdopen(mypipe[0],"r")) == NULL) {
+      printf("ERROR: Cannot read from mypipe[0]\n");
+      exit(1);
+    }
+    for(n_input = 0; n_input < sizeof(input)-1; ++n_input) {
+      if((c = getc(fpin)) == EOF) break;
+      *s++ = c;
+    }
+    input[n_input] = '\0';
+    fclose(fpin);
+    
+    wait(NULL);  // wait for child to finish
+    close(mypipe[0]);
+  }
+  //printf("A");
+  return n_input;
+}
+
+int readMyStoreFromChildUPDATED(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5) {
+    char *fifo_write = "/tmp/fifo_server.dat";
+    char fifo_read[40];
+    char send_message[200];
+    int fd_write, fd_read, n_read;
+    // create and open the client's own FIFO for reading
+    sprintf(fifo_read, "/tmp/fifo_client_.%ddat",getpid());
+    if (mkfifo(fifo_read,0666) != 0) {
+            perror("client mkfifo failed, returns: ");
+            return -1;
+    }
+    
+    // open the server's FIFO for writing
+    if ((fd_write = open(fifo_write, O_WRONLY)) < 0) {
+            perror("Cannot open FIFO to server: ");
+            return -1;
+    }
+    sprintf(send_message, "return %s %s %s %s %s %s", fifo_read, argv1, argv2, argv3, argv4, argv5);
+    write(fd_write,send_message,strlen(send_message)); 
+    close(fd_write);
+    return 0;
+}
+
 
 //Function to determine the maximum number of records (from myui1)
 //by separating the input into name value pairs stored in data
@@ -128,67 +219,7 @@ int parseInputForRecords(int counter) {
     strcpy(dataStorage[i].body, ARGC);
     strcpy(dataStorage[i].category, ARGD); 
   }
-}
-
-//Function to pipe from myStore, a TEXT database and myuiscreen.
-//Modifications include considering more arguments, and changing execvp.
-int readmyStoreFromChild(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5) {
-  int pid, mypipe[2];
-  char *newargv[7];
-  char *errmsg;
-  int n_input = 0;
-  // turn off special keyboard handling
-  //getkey_terminate();
-  
-  // create the pipe
-  if(pipe(mypipe) == -1) {
-    strcpy(errmsg,"Problem in creating the pipe");
-    return 0;
-  }
-  
-  pid = fork();
-  
-  if(pid == -1) {
-    strcpy(errmsg, "Error in forking");
-    return 0;
-  }
-  if(pid == 0) {  // child
-    close(mypipe[0]);  // Don't need to read from the pipe
-    dup2(mypipe[1],STDOUT_FILENO);  // connect the "write-end" of the pipe to child's STDOUT
-    
-    newargv[0] = "./myStore";
-    newargv[1] = argv1;
-    newargv[2] = argv2;
-    newargv[3] = argv3;
-    newargv[4] = argv4;
-    newargv[5] = argv5;
-    newargv[6] = NULL;
-    execvp(newargv[0],newargv);
-
-    exit(0);
-  }
-  else if(pid > 0) {
-    char *s = input;
-    int c;
-    close(mypipe[1]);  // Don't need to write to the pipe
-    // read the data into the input array from mypipe[0]
-    FILE *fpin;
-    if((fpin = fdopen(mypipe[0],"r")) == NULL) {
-      printf("ERROR: Cannot read from mypipe[0]\n");
-      exit(1);
-    }
-    for(n_input = 0; n_input < sizeof(input)-1; ++n_input) {
-      if((c = getc(fpin)) == EOF) break;
-      *s++ = c;
-    }
-    input[n_input] = '\0';
-    fclose(fpin);
-    
-    wait(NULL);  // wait for child to finish
-    close(mypipe[0]);
-  }
-  //printf("A");
-  return n_input;
+  return 0;
 }
 
 //Determines the maxRecord, and uses that to setup the master array, dataStorage.
@@ -196,6 +227,7 @@ int setStat(){
   readmyStoreFromChild("stat", NULL, NULL, NULL, NULL); 
   parseInputForStat();
   parseInputForRecords(maxRecord); 
+  return 0;
 }
 
 //Creates the text representation of myuiscreen by using ASCII art.
@@ -849,12 +881,9 @@ int main() {
         else if (c == KEY_F7){
         	if(col < 95) {
             xt_par2(XT_SET_ROW_COL_POS,row = 9,col = 95);
-            int reset = 0;
-            for(reset; reset < 29; reset++) Title[reset] = ' ';
-            reset = 0;
-            for(reset; reset < 140; reset++) Body[reset] = ' ';
-            reset = 0;
-            for(reset; reset < 16; reset++) Category[reset] = ' ';
+            for(reset = 0; reset < 29; reset++) Title[reset] = ' ';
+            for(reset = 0; reset < 140; reset++) Body[reset] = ' ';
+            for(reset = 0; reset < 16; reset++) Category[reset] = ' ';
           }
         	else if(Title[0] == ' ' && Body[0] == ' ' && Category[0] == ' ') {
             xt_par2(XT_SET_ROW_COL_POS,row = CATEGORY,col = 2);
@@ -872,12 +901,9 @@ int main() {
         }
     }
     if (screen == 1 || screen == 2){
-      int reset = 0;
-      for(reset; reset < 29; reset++) Title[reset] = ' ';
-      reset = 0;
-      for(reset; reset < 140; reset++) Body[reset] = ' ';
-      reset = 0;
-      for(reset; reset < 16; reset++) Category[reset] = ' ';
+      for(reset = 0; reset < 29; reset++) Title[reset] = ' ';
+      for(reset = 0; reset < 140; reset++) Body[reset] = ' ';
+      for(reset = 0; reset < 16; reset++) Category[reset] = ' ';
       addScreen();
       if (screen == 2){ 
         char TempBodyA[71]; 
@@ -1057,12 +1083,9 @@ int main() {
     }
   }
     if (screen == 4){
-      int reset = 0;
-      for(reset; reset < 29; reset++) Title[reset] = ' ';
-      reset = 0;
-      for(reset; reset < 140; reset++) Body[reset] = ' ';
-      reset = 0;
-      for(reset; reset < 16; reset++) Category[reset] = ' ';
+      for(reset = 0; reset < 29; reset++) Title[reset] = ' ';
+      for(reset = 0; reset < 140; reset++) Body[reset] = ' ';
+      for(reset = 0; reset < 16; reset++) Category[reset] = ' ';
       deleteScreen();
       if (screen == 4){ 
         char TempBodyA[71]; 
