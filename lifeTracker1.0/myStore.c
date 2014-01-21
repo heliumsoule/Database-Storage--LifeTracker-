@@ -40,15 +40,17 @@ int command = NOTHING;
 char *subject = NULL;
 char *body = NULL;
 char *category = NULL;
+char sendToClient[1000];
 int item_start = -1;
 int item_end = -1;
+char input[1000];
 
 // Prototypes:
 int parseArgs(int argc, char *argv[]);
 int isPositive(char *s);
 int readData(void);
 int add(char *subject, char *body, char *category);
-int edit(char *sn);
+int edit(char *sn, char *subject, char *body, char *category);
 int writeData(void);
 int display(char *sn);
 int delete(char *sn);
@@ -88,7 +90,6 @@ char *fifo_read = "/tmp/fifo_server.dat";
 // ---------------------------------- main() --------------------------------
 int main(int argc, char *argv[]) {
     int read_Length;
-    char input[200];
             
     if (signal(SIGINT, the_handler) == SIG_ERR) {
         perror("Cannot set up signal handler on SIGINT...");
@@ -124,16 +125,17 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-
-    if (!parseArgs(argc, argv)) {
+}
+int runMyStore(char *arg1, char *arg2, char *arg3, char *arg4, char *arg5){
+  /* if (!parseArgs(argc, argv)) {
         if (errmsg[0] != '\0')
             printf("%s\n",errmsg);
         else
             printf("|status: ERROR: No command-line arguments, or error in arguments\n\nVersion: %s\n%s|\n",
             version,Usage);
         return 1;
-    }
-    
+    }*/    
+
     if (!readData()) {
         if (errmsg[0] != '\0')
             printf("|status: ERROR: %s|\n", errmsg);
@@ -142,7 +144,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    if (command == ADD && !add(argv[2],argv[3],argv[4])) {
+    if (strcmp(arg1, "add") == 0 && !add(arg2,arg3,arg4)) {
         if (errmsg[0] != '\0')
             printf("|status: ERROR: %s|\n", errmsg);
         else
@@ -150,31 +152,31 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    if (command == STAT) {
+    if (strcmp(arg1, "stat") == 0) {
         statis();
     }
     
-    if (command == DISPLAY && !display(argv[2])) {
+    if (strcmp(arg1, "display") == 0 && !display(arg2)) {
         if (errmsg[0] != '\0')
             printf("|status: ERROR: %s|\n", errmsg);
         else
-            printf("|status: ERROR: Cannot display %s|\n",argv[2]);
+            printf("|status: ERROR: Cannot display %s|\n",arg2);
         return 1;
     }
     
-    if (command == DELETE && !delete(argv[2])) {
+    if (strcmp(arg1, "delete") == 0 && !delete(arg2)) {
         if (errmsg[0] != '\0')
             printf("|status: ERROR: %s|\n", errmsg);
         else
-            printf("|status: ERROR: Cannot delete %s|\n", argv[2]);
+            printf("|status: ERROR: Cannot delete %s|\n", arg2);
         return 1;
     }
     
-    if (command == EDIT && !edit(argv[2])) {
+    if (strcmp(arg1, "edit") == 0 && !edit(arg2, arg3, arg4, arg5)) {
         if (errmsg[0] != '\0')
             printf("|status: ERROR: %s|\n", errmsg);
         else
-            printf("|status: ERROR: cannot edit %s|\n",argv[2]);
+            printf("|status: ERROR: cannot edit %s|\n",arg2);
         return 1;
     }
     
@@ -199,62 +201,41 @@ static void the_handler(int sig) {
     exit(0);
 }
 
-// ========================= Capital =======================
-char *Capital(char *s) {
-    char *s2 = s;
-    char c;
-    while ((c = *s2) != 0) {
-        if (c >= 'a' && c <= 'z')
-            *s2 = c - 'a' + 'A';
-        ++s2;
-    }
-    return s;
-}
-
-// ================================ Process ===========================
 int Process(char *s) {
-    char *fields[5];
+    char *fields[7];
     int nfields, fd_write;
     
-    nfields = SeparateIntoFields(s, fields, 5);
-    // do the commands:
-    if (strcmp(fields[0],"quit") == 0) return -1;
-    if (strcmp(fields[0],"print") == 0 && nfields > 1) {
-        if (nfields == 2)
-            printf("%s\n",Capital(fields[1]));
-        else
-            printf("%s %s\n",Capital(fields[1]),Capital(fields[2]));
-    }
-    else if (strcmp(fields[0],"return") == 0 && nfields == 3) {
-        if ((fd_write = open(fields[1],O_WRONLY)) < 0)
-            printf("Cannot write to %s\n", fields[1]);
-        else {
-            write(fd_write,Capital(fields[2]),strlen(fields[2]));
-            close(fd_write);
-        }
-    }
-    else
-        printf("Unrecognized command: %s %s %s\n", fields[0],fields[1],fields[2]);
+    //parseInputForData();
+    nfields = SeparateIntoFields(s, fields, 7);
+    if ((fd_write = open(fields[1],O_WRONLY)) < 0)
+      printf("Cannot write to %s\n", fields[1]);
+      else {
+	//write(fd_write, Capital(fields[2]), strlen(fields[2]);
+      runMyStore(fields[2], fields[3], fields[4], fields[5], fields[6]);
+      //if (strcmp(fields[2], "stat") == 0 || strcmp(fields[2], "display") == 0)
+	    write(fd_write,sendToClient, 1000);
+        close(fd_write);
+      }
     return 0;
 }
-
 // ================================ SeparateIntoFields ===================================
 int SeparateIntoFields(char *s, char **fields, int max_fields) {
-    int i;
+  int i;
     static char null_c = '\0';
     
     for (i = 0; i < max_fields; ++i) fields[i] = &null_c;
     
     for (i = 0; i < max_fields; ++i) {
-        while (*s && (*s == ' ' || *s == '\t' || *s == '\n')) ++s;  // skip whitespace
+        while (*s && (*s == '|' || *s == '\t' || *s == '\n')) ++s;  // skip whitespace
         if (!*s) return i;
         fields[i] = s;
         if (i == max_fields - 1) return i+1;
-        while (*s && *s != ' ' && *s != '\t' && *s != '\n') ++s;    // skip non-whitespace
+        while (*s && *s != '|' && *s != '\t' && *s != '\n') ++s;    // skip non-whitespace
         if (!*s) return i+1;
         *s++ = '\0';
     }
     return -1;
+
 }
 
 // ------------------------------- parseArgs() -------------------------------
@@ -301,7 +282,7 @@ int parseArgs(int argc, char *argv[]) {
             return TRUE;
         }
         else {
-            sprintf(errmsg, "NIGGAS Unrecognized 3-argument call: %s %s %s",argv[1],argv[2],argv[3]);
+            sprintf(errmsg, "Unrecognized 3-argument call: %s %s %s",argv[1],argv[2],argv[3]);
             return FALSE;
         }
     }
@@ -406,13 +387,13 @@ int add(char *subject, char *body, char *category) {
     
     ++nitems;
     rewrite = TRUE;
-    printf("|status: OK|\n");
+    //printf("|status: OK|\n");
     
     return TRUE;
 }
 
 // ------------------------------------- edit ------------------------------------ 
-int edit(char *sn) { 
+int edit(char *sn, char *subject, char *body, char *category) { 
     int n = atoi(sn);
     int i;
     struct carrier *ptr;
@@ -437,7 +418,7 @@ int edit(char *sn) {
     ptr->theData = this_data;
     
     rewrite = TRUE;
-    printf("|status: OK|\n");
+    //printf("|status: OK|\n");
     return TRUE;
 }
 
@@ -474,12 +455,17 @@ int writeData(void) {
     return TRUE;
 }
 
+
 // ------------------------------------- stat ------------------------------
 void statis(void) {
-    struct tm *tp;
+    struct tm *tp1;
+    struct tm *tp2;
 
-    printf("|status: OK|\n");
-    printf("|version: %s|\n",version);
+    if (nitems == 0) return;
+    tp1 = localtime(&(first->theData.theTime));
+    tp2 = localtime(&(last->theData.theTime));
+    sprintf(sendToClient, "|status: OK|\n|version: %s|\n|author: %s|\n|nitems: %d|\n|first-time: %d-%02d-%02d %02d:%02d:%02d|\n|last-time: %d-%02d-%02d %02d:%02d:%02d|\n",version,author, nitems, tp1->tm_year+1900,tp1->tm_mon,tp1->tm_mday,tp1->tm_hour,tp1->tm_min,tp1->tm_sec, tp2->tm_year+1900,tp2->tm_mon,tp2->tm_mday,tp2->tm_hour,tp2->tm_min,tp2->tm_sec);
+    /*printf("|version: %s|\n",version);
     printf("|author: %s|\n",author);
     printf("|nitems: %d|\n", nitems);
     if (nitems == 0) return;
@@ -488,7 +474,7 @@ void statis(void) {
         tp->tm_year+1900,tp->tm_mon,tp->tm_mday,tp->tm_hour,tp->tm_min,tp->tm_sec);
     tp = localtime(&(last->theData.theTime));
     printf("|last-time: %d-%02d-%02d %02d:%02d:%02d|\n",
-        tp->tm_year+1900,tp->tm_mon,tp->tm_mday,tp->tm_hour,tp->tm_min,tp->tm_sec);
+    tp->tm_year+1900,tp->tm_mon,tp->tm_mday,tp->tm_hour,tp->tm_min,tp->tm_sec);*/
 
     //printf("|first-time: %s|\n", rstrip(ctime(&(first->theData.theTime))));
     //printf("|last-time: %s|\n", rstrip(ctime(&(last->theData.theTime))));
@@ -511,8 +497,9 @@ int display(char *sn) {
     int i;
     struct carrier *ptr;
     struct data this_data;
+    struct tm *tp1;
     struct tm *tp;
-    
+ 
     if (n > nitems) {
         sprintf(errmsg, "Cannot display item %d.  Item numbers range from 1 to %d",n,nitems);
         return FALSE;
@@ -522,15 +509,17 @@ int display(char *sn) {
         ptr = ptr->next;
     
     this_data = ptr->theData;
-    printf("|status: OK|\n");
-    printf("|item: %d|\n",n);
+    tp1 = localtime(&this_data.theTime);
+    sprintf(sendToClient, "|status: OK|\n|item: %d|\n|time: %d-%02d-%02d %02d:%02d:%02d|\n|subject: %s|\n|body: %s|\n|category: %s|\n",n,tp1->tm_year+1900,tp1->tm_mon,tp1->tm_mday,tp1->tm_hour,tp1->tm_min,tp1->tm_sec,this_data.theSubject,this_data.theBody,this_data.theCategory);
+
+    /*printf("|item: %d|\n",n);
     tp = localtime(&this_data.theTime);
     printf("|time: %d-%02d-%02d %02d:%02d:%02d|\n",
         tp->tm_year+1900,tp->tm_mon,tp->tm_mday,tp->tm_hour,tp->tm_min,tp->tm_sec);
-    //printf("|time: %s|\n",rstrip(ctime(&this_data.theTime)));
+    printf("|time: %s|\n",rstrip(ctime(&this_data.theTime)));
     printf("|subject: %s|\n",this_data.theSubject);
     printf("|body: %s|\n",this_data.theBody);
-    printf("|category: %s|\n",this_data.theCategory);
+    printf("|category: %s|\n",this_data.theCategory);*/
     
     return TRUE;
 }
@@ -563,6 +552,6 @@ int delete(char *sn) {
     
     --nitems;
     rewrite = TRUE;
-    printf("|status: OK|\n");
+    //printf("|status: OK|\n");
     return TRUE;
 }

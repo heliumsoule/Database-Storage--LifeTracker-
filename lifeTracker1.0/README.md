@@ -11,16 +11,19 @@ LifeTracker is an easy way to store important information and keep it organized.
 records section with the left/right arrow keys.
 5. Sort the records chronologically or alphabetically.
 
-To run LifeTracker, in the terminal, type: 
+To run the server, in the terminal, type: 
 
-    gcc myStore.c -o myStore
-    make
-    ./myuiscreen
+    	make
+    	./myStore
+
+Then, to run Lifetracker, in a separate terminal (size 120 x 28), type:
+
+	./myuiscreen
 
 Note that mystore has been updated from Mr. Brooks' previous version. The only function that 
 is different is the add function which now takes three arguments in the form: 
 
-    ./myStore add SUBJECT BODY CATEGORY
+    	./myStore add SUBJECT BODY CATEGORY
 
 Important functions to know include: <br>
     F2 - To Add a record, hit F2. The user is then taken to another screen where the parameters for a new record can be inputted.
