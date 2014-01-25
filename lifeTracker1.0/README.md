@@ -16,9 +16,12 @@ To run the server, in the terminal, type:
     	make
     	./myStore
 
+Note: The default port number is 51000
 Then, to run Lifetracker, in a separate terminal (size 120 x 28), type:
 
-	./myuiscreen
+	./myuiscreen <IP-address> <portno>
+    For instance:
+    ./myuiscreen 127.0.0.1 51000
 
 Note that mystore has been updated from Mr. Brooks' previous version. The only function that 
 is different is the add function which now takes three arguments in the form: 

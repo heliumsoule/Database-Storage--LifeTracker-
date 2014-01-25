@@ -1,17 +1,21 @@
 #include <fcntl.h>
 #include "keyboard.h"
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h> 
 #include <unistd.h>
 #include "xterm_control.h"
+#include <netdb.h>
+
+#define MAX_BUF 1000
 
 char temporary[1000];
 
-//TESTING TESTING
 int row, col;                         //120 x 28                                
 int i, j;                            //counters.
 int screen = 0;                     //screen toggler, 0, 1, or 2 to determine which screen to be on (main, add, or edit)      
@@ -48,51 +52,86 @@ int search = 0;                 //Toggle switch for searching. 1 is ON, 0 is OFF
 int total;                     //The total number of name value pairs.
 int reset = 0;                //Universal reset counter
 
+char send_buffer[MAX_BUF];
+char receive_buffer[MAX_BUF];
+char *server;
+int portno;
+
+//PROTOTYPES
+void addScreen();
+void bubbleSort();
+void bubbleSortTime();
+void clearSearch();
+void deleteScreen();
+void fillCategory();
+void lifeTracker();
+void parseInputForStat();
+int parseInputForRecords(int counter);
+int readmyStoreFromChildSOCKETS(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5);
+void recordsHelper();
+void removeBlanks();
+void searchResults(int range);
+int send_to_server(char *server_name, int portno, char *send_buffer, char *receive_buffer, int max_buf);
+int setStat();
+void setup();
+void updateRecords(int range);
+
 //Function to pipe from myStore, a TEXT database and myuiscreen.
 //Modifications include considering more arguments, and changing execvp.
+int readmyStoreFromChildSOCKETS(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5) {
+  //gather_message(send_buffer, argv+3, argc-3, MAX_BUF); 
+  input[0] = 'H';
+  input[1] = '\0';
+  //printf("input value before send_to_server %s\n", input);
+  sprintf(send_buffer, "return|%s|%s|%s|%s|%s", argv1, argv2, argv3, argv4, argv5);
 
+   if (send_to_server(server, portno, send_buffer, input, MAX_BUF) < 0) {
+    printf("Client: ERROR in send_to_server\n");
+    return -1;
+  }
+  return 0;
+}
 
-int readmyStoreFromChildUPDATED(char *argv1, char *argv2, char *argv3, char *argv4, char *argv5) {
-    char *fifo_write = "/tmp/fifo_server.dat";
-    char fifo_read[1000];
-    char send_message[1000];
-    for(i = 0; i < 1000; i++){
-      input[i] = '\0';
-    }
-    //char message[1000];
-    int fd_write, fd_read, n_read;
-    // create and open the client's own FIFO for reading
-    sprintf(fifo_read, "/tmp/fifo_client_.%ddat",getpid());
-    if (mkfifo(fifo_read,0666) != 0) {
-            perror("client mkfifo failed, returns: ");
-            return -1;
-    }
-    
-    // open the server's FIFO for writing
-    if ((fd_write = open(fifo_write, O_WRONLY)) < 0) {
-            perror("Cannot open FIFO to server: ");
-            return -1;
-    }
-    sprintf(send_message, "return|%s|%s|%s|%s|%s|%s", fifo_read, argv1, argv2, argv3, argv4, argv5);
-    write(fd_write,send_message,strlen(send_message)); 
-    close(fd_write);
-    
-    // open the client's FIFO for reading
-    if ((fd_read = open(fifo_read, O_RDONLY)) < 0) {
-            perror("Cannot open FIFO to read from server: ");
-            return -1;
-    }
-    //client waits, server works
-    // read server's reply in client's FIFO
-    n_read = read(fd_read,input,1000); //client pauses
-    if (n_read >= 0) input[n_read] = '\0';
-    //printf("Server returned: %s\n", input);
-    
-    // close and delete client's FIFO
-    close(fd_read);
-    unlink(fifo_read);
-        
-    return 0;
+int send_to_server(char *server_name, int portno, char *send_buffer, char *receive_buffer, int max_buf) {
+  int sockfd;
+  struct sockaddr_in serv_addr;
+  struct hostent *server;
+  int n;
+
+  // create a socket
+  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    perror("Client cannot create socket");
+    return -1;
+  }
+  
+  if ((server = gethostbyname(server_name)) == NULL) {
+    perror("Client cannot gethostbyname");
+    return -1;
+  }
+  
+  // create server addr
+  bzero((char *) &serv_addr, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+  serv_addr.sin_port = htons(portno);
+  
+  // connect to the server 
+  if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)  {
+      perror("Client: ERROR connecting");
+      exit(1);
+  }
+
+  if (write(sockfd, send_buffer, strlen(send_buffer)) < 0) {
+  printf("Client: error writing to server\n");
+  return -1;
+  }
+  
+  //server receives, returns
+  *receive_buffer = '\0';
+  n = read(sockfd, receive_buffer, max_buf-1);
+  if (n >= 0) receive_buffer[n] = '\0';
+  close(sockfd);
+  return n;
 }
 
 //Function to determine the maximum number of records (from myui1)
@@ -169,7 +208,7 @@ int parseInputForRecords(int counter) {
   for(i = 0; i < counter; i++) {
     char str[80];
     sprintf(str, "%d", i+1);
-    readmyStoreFromChildUPDATED("display", str, NULL, NULL, NULL);
+    readmyStoreFromChildSOCKETS("display", str, NULL, NULL, NULL);
     recordsHelper();
     char *ARGA = record[2].value;
     char *ARGB = record[3].value;
@@ -191,7 +230,7 @@ int parseInputForRecords(int counter) {
 
 //Determines the maxRecord, and uses that to setup the master array, dataStorage.
 int setStat(){
-  readmyStoreFromChildUPDATED("stat", NULL, NULL, NULL, NULL); 
+  readmyStoreFromChildSOCKETS("stat", NULL, NULL, NULL, NULL); 
   parseInputForStat();
   parseInputForRecords(maxRecord); 
   return 0;
@@ -614,7 +653,19 @@ void deleteScreen(){
 }
 
 //Huge main function.
-int main() {
+int main(int argc, char *argv[]) {
+  if (argc < 3){                                                      //if you don't type enough arguments
+    printf("Sockets client, usage:\n");
+    printf("sockets_client  {IP-address} {port} \n");
+    return 0;
+  } 
+  else {
+    free(server);
+    server = malloc((strlen(argv[1] + 1) * sizeof(char)));
+    strcpy(server, argv[1]);
+    portno = atoi(argv[2]);
+  }
+
   int c;
   while(1){
     if(screen == 0){ 
@@ -622,10 +673,8 @@ int main() {
       currentRecord = 0;
       recordView = 0;
       xt_par0(XT_CLEAR_SCREEN);
-      //if(maxRecord != 0) updateRecords(0);
       lifeTracker();
       xt_par2(XT_SET_ROW_COL_POS,row = 8, col = 2);
-      //printf("%s", temporary);
     }
     while(screen == 0) {
       while((c = getkey()) == KEY_NOTHING);
@@ -744,7 +793,6 @@ int main() {
             xt_par2(XT_SET_ROW_COL_POS,row,col);
           }
           else if((row == 9 || row == 12) && col == 95) {
-	    //xt_par2(XT_SET_ROW_COL_POS,row,col);
             putchar(' ');
             Title[col - 95] = ' ';
             xt_par2(XT_SET_ROW_COL_POS,row,col);
@@ -780,7 +828,6 @@ int main() {
           }
         } 
         else if((c >= ' ' && c <= '~') && col >= 95 && col < 120){
-        	//putchar(c); 
           if(row == 9 && col < 112) {
             putchar(c);
             Category[col - 95] = c;
@@ -860,10 +907,8 @@ int main() {
           }
           else if(Title[0] != ' ' || Body[0] != ' ' || Category[0] != ' ') {
             clearSearch();
-	    //updateRecords(0);
-	    search = 1;
+	          search = 1;
             searchResults(0);
-            //search = 1;
             xt_par2(XT_SET_ROW_COL_POS,row = 7, col = 20);
           }
         }
@@ -1013,10 +1058,10 @@ int main() {
       	}
       }
       else if(c == KEY_F2 && screen == 1 /* && there is a valid title and description */){
-	//save record to corresponding subject
+	      //save record to corresponding subject
         if(Title[0] != ' ' || Body[0] != ' ' || Category[0] != ' ') {
           removeBlanks();
-          readmyStoreFromChildUPDATED("add", Title, Body, Category, NULL);
+          readmyStoreFromChildSOCKETS("add", Title, Body, Category, NULL);
         }
         int k = 0;
         while(k != 29) Title[k++] = ' ';
@@ -1028,7 +1073,7 @@ int main() {
         screen = 0;
       }
       else if(c == KEY_F2 && screen == 2 /* && there has been a valid change in the record */){
-        //update record
+      //update record
 	    removeBlanks();
       char str[80];
     	for(i = 0; i < maxRecord; i++){
@@ -1040,7 +1085,7 @@ int main() {
     	    break;
     	  }
     	}
-      readmyStoreFromChildUPDATED("edit", str, Title, Body, Category);
+      readmyStoreFromChildSOCKETS("edit", str, Title, Body, Category);
       int k = 0;
       while(k != 29) Title[k++] = ' ';
       k = 0;
@@ -1110,7 +1155,7 @@ int main() {
         	  break;
         	}
         }
-        readmyStoreFromChildUPDATED("delete", str, NULL, NULL, NULL);
+        readmyStoreFromChildSOCKETS("delete", str, NULL, NULL, NULL);
         maxRecord--;
         screen = 0;
       }

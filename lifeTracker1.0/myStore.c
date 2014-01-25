@@ -18,6 +18,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netdb.h>
 
 char *Usage = "Usage:\tmyStore add \"subject\" \"body\"\n\
     myStore stat\n\
@@ -43,6 +47,7 @@ char *category = NULL;
 char sendToClient[1000];
 int item_start = -1;
 int item_end = -1;
+int portno = 51000;
 char input[1000];
 
 // Prototypes:
@@ -57,11 +62,10 @@ int delete(char *sn);
 void statis(void);
 char *rstrip(char *s);
 void list(void);
-char *Capital(char *s);
-int Process(char *s);
+int runMyStore(char *arg1, char *arg2, char *arg3, char *arg4, char *arg5);
 char *SkipWhitespace(char *s, int Whitespace);
 int SeparateIntoFields(char *s, char **fields, int max_fields);
-static void the_handler(int sig);
+void server_start();
 
 // this describes the data item on disk
 struct data {
@@ -89,53 +93,76 @@ int fd_read, fd_write;
 char *fifo_read = "/tmp/fifo_server.dat";
 // ---------------------------------- main() --------------------------------
 int main(int argc, char *argv[]) {
-    int read_Length;
-            
-    if (signal(SIGINT, the_handler) == SIG_ERR) {
-        perror("Cannot set up signal handler on SIGINT...");
-        return -1;
-    }
-    if (signal(SIGUSR1, the_handler) == SIG_ERR) {
-        perror("Cannot set up signal handler on SIGUSR1...");
-        return -1;
-    }
-    unlink(fifo_read);
-    if (mkfifo(fifo_read,0666) != 0) {
-        perror("mkfifo error: ");
-        return -1;
-    }
-    fd_read = open(fifo_read, O_RDONLY);
-    if (fd_read < 0) {
-        printf("open(fifo_read) failed, returns: %d\n", fd_read);
-        return fd_read;
-    }
-    if ((fd_write = open(fifo_read, O_WRONLY)) < 0) {
-        perror("Cannot open fifo_read for writing. ");
-        return fd_write;
-    }
-    while(1) {
-        read_Length = read(fd_read, input, 200);
-        if(read_Length > 0) {
-            input[read_Length] = '\0';
-            if (Process(input) == -1) {
-                printf("fifo_server quitting...\n");
-                close(fd_read);
-                unlink(fifo_read);
-                return 0;
-            }
-        }
-    }
-}
-int runMyStore(char *arg1, char *arg2, char *arg3, char *arg4, char *arg5){
-  /* if (!parseArgs(argc, argv)) {
-        if (errmsg[0] != '\0')
-            printf("%s\n",errmsg);
-        else
-            printf("|status: ERROR: No command-line arguments, or error in arguments\n\nVersion: %s\n%s|\n",
-            version,Usage);
-        return 1;
-    }*/    
+  if (argc == 2)                            //if you input 2 arguments, then the first input becomes the port number
+    portno = atoi(argv[1]);
 
+  server_start();
+  return 0;
+}
+
+// ---------------------------------------- server_start -------------------------------------------
+void server_start() {
+  int master_sockfd, current_sockfd;
+  socklen_t client_len;
+  struct sockaddr_in serv_addr, client_addr;
+  char buffer[1000], c;
+  int nread, i;
+
+  // Create master socket:
+  if ((master_sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {       //0 is a fixed number; always use 0
+    perror("Server: Cannot create master socket.");
+    exit(-1);
+  }
+
+  // create socket structure
+  bzero((char *) &serv_addr, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;                          //connects to internet
+  serv_addr.sin_addr.s_addr = INADDR_ANY;                  //allows anyone to connect
+  serv_addr.sin_port = htons(portno);                      //designates a port number to connect to
+
+  // bind the socket to the local port
+  if (bind(master_sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+    perror("Server: Error on binding");
+    exit(1);
+  }
+
+  // listen
+  listen(master_sockfd, 5);               //5 is a fixed number; always use 5
+
+  client_len = sizeof(client_addr);
+  printf("Server listening on port %d\n", portno);
+
+  // master loop
+  while(TRUE) {
+    // block until a client connects
+    if ((current_sockfd = accept(master_sockfd, (struct sockaddr *) &client_addr, &client_len)) < 0) {
+      perror("Server: Error on accept()");
+      exit(1);
+    }
+
+    nread = read(current_sockfd, buffer, 1000);                     //reads from client (255 character max)
+    if (nread > 0) {
+      // Quit command received?
+      if (buffer[0] == 'q') {                                       //if string starts with q, then quit and close the server
+	//write(current_sockfd, QUITTING, sizeof(QUITTING));
+	close(current_sockfd);
+	close(master_sockfd);
+	printf("Server quitting...\n");
+	exit(0);
+      }
+      // upper-case command received?
+      else{
+	char *fields[6];
+	SeparateIntoFields(buffer, fields, 6);
+	runMyStore(fields[1], fields[2], fields[3], fields[4], fields[5]);
+	write(current_sockfd, sendToClient, 1000);       //write to client
+	close(current_sockfd);
+      }
+    }
+  }
+}
+
+int runMyStore(char *arg1, char *arg2, char *arg3, char *arg4, char *arg5){
     if (!readData()) {
         if (errmsg[0] != '\0')
             printf("|status: ERROR: %s|\n", errmsg);
@@ -193,31 +220,6 @@ int runMyStore(char *arg1, char *arg2, char *arg3, char *arg4, char *arg5){
     return 0;
 }
 
-static void the_handler(int sig) {
-    printf("Signal caught: fifo_server terminated by signal %d\n",sig);
-    close(fd_read);
-    close(fd_write);
-    unlink(fifo_read);
-    exit(0);
-}
-
-int Process(char *s) {
-    char *fields[7];
-    int nfields, fd_write;
-    
-    //parseInputForData();
-    nfields = SeparateIntoFields(s, fields, 7);
-    if ((fd_write = open(fields[1],O_WRONLY)) < 0)
-      printf("Cannot write to %s\n", fields[1]);
-      else {
-	//write(fd_write, Capital(fields[2]), strlen(fields[2]);
-      runMyStore(fields[2], fields[3], fields[4], fields[5], fields[6]);
-      //if (strcmp(fields[2], "stat") == 0 || strcmp(fields[2], "display") == 0)
-	    write(fd_write,sendToClient, 1000);
-        close(fd_write);
-      }
-    return 0;
-}
 // ================================ SeparateIntoFields ===================================
 int SeparateIntoFields(char *s, char **fields, int max_fields) {
   int i;
@@ -465,19 +467,6 @@ void statis(void) {
     tp1 = localtime(&(first->theData.theTime));
     tp2 = localtime(&(last->theData.theTime));
     sprintf(sendToClient, "|status: OK|\n|version: %s|\n|author: %s|\n|nitems: %d|\n|first-time: %d-%02d-%02d %02d:%02d:%02d|\n|last-time: %d-%02d-%02d %02d:%02d:%02d|\n",version,author, nitems, tp1->tm_year+1900,tp1->tm_mon,tp1->tm_mday,tp1->tm_hour,tp1->tm_min,tp1->tm_sec, tp2->tm_year+1900,tp2->tm_mon,tp2->tm_mday,tp2->tm_hour,tp2->tm_min,tp2->tm_sec);
-    /*printf("|version: %s|\n",version);
-    printf("|author: %s|\n",author);
-    printf("|nitems: %d|\n", nitems);
-    if (nitems == 0) return;
-    tp = localtime(&(first->theData.theTime));
-    printf("|first-time: %d-%02d-%02d %02d:%02d:%02d|\n",
-        tp->tm_year+1900,tp->tm_mon,tp->tm_mday,tp->tm_hour,tp->tm_min,tp->tm_sec);
-    tp = localtime(&(last->theData.theTime));
-    printf("|last-time: %d-%02d-%02d %02d:%02d:%02d|\n",
-    tp->tm_year+1900,tp->tm_mon,tp->tm_mday,tp->tm_hour,tp->tm_min,tp->tm_sec);*/
-
-    //printf("|first-time: %s|\n", rstrip(ctime(&(first->theData.theTime))));
-    //printf("|last-time: %s|\n", rstrip(ctime(&(last->theData.theTime))));
     return;
 }
 
@@ -511,16 +500,6 @@ int display(char *sn) {
     this_data = ptr->theData;
     tp1 = localtime(&this_data.theTime);
     sprintf(sendToClient, "|status: OK|\n|item: %d|\n|time: %d-%02d-%02d %02d:%02d:%02d|\n|subject: %s|\n|body: %s|\n|category: %s|\n",n,tp1->tm_year+1900,tp1->tm_mon,tp1->tm_mday,tp1->tm_hour,tp1->tm_min,tp1->tm_sec,this_data.theSubject,this_data.theBody,this_data.theCategory);
-
-    /*printf("|item: %d|\n",n);
-    tp = localtime(&this_data.theTime);
-    printf("|time: %d-%02d-%02d %02d:%02d:%02d|\n",
-        tp->tm_year+1900,tp->tm_mon,tp->tm_mday,tp->tm_hour,tp->tm_min,tp->tm_sec);
-    printf("|time: %s|\n",rstrip(ctime(&this_data.theTime)));
-    printf("|subject: %s|\n",this_data.theSubject);
-    printf("|body: %s|\n",this_data.theBody);
-    printf("|category: %s|\n",this_data.theCategory);*/
-    
     return TRUE;
 }
 
